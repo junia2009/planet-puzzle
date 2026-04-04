@@ -1135,17 +1135,102 @@ window.addEventListener('orientationchange', () => setTimeout(resizeGame, 150));
     const c = document.createElement('canvas');
     c.width = c.height = 180;
     const ctx = c.getContext('2d');
-    ctx.fillStyle = '#0a0a1a';
+
+    // 背景グラデーション
+    const bg = ctx.createLinearGradient(0, 0, 180, 180);
+    bg.addColorStop(0,   '#0f0c29');
+    bg.addColorStop(0.5, '#1a0533');
+    bg.addColorStop(1,   '#0d1b4b');
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, 180, 180);
-    const g = ctx.createRadialGradient(90, 90, 0, 90, 90, 90);
-    g.addColorStop(0, 'rgba(167,139,250,0.5)');
-    g.addColorStop(1, 'rgba(0,0,30,0)');
-    ctx.fillStyle = g;
+
+    // 外周グロー
+    const outerGlow = ctx.createRadialGradient(90, 90, 30, 90, 90, 90);
+    outerGlow.addColorStop(0, 'rgba(124,58,237,0.5)');
+    outerGlow.addColorStop(1, 'rgba(15,12,41,0)');
+    ctx.fillStyle = outerGlow;
     ctx.fillRect(0, 0, 180, 180);
-    ctx.font = '90px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🪐', 90, 95);
+
+    // 星
+    [[22,25],[158,20],[170,65],[10,110],[168,135],[140,165],[35,158],[90,18]]
+      .forEach(([x,y]) => {
+        ctx.beginPath();
+        ctx.arc(x, y, 1.5, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.fill();
+      });
+
+    // リング（後ろ側）
+    ctx.save();
+    ctx.translate(90, 96);
+    ctx.scale(1, 0.32);
+    ctx.beginPath();
+    ctx.arc(0, 0, 74, 0, Math.PI, false); // 下半分だけ
+    const ringGrad = ctx.createLinearGradient(-74, 0, 74, 0);
+    ringGrad.addColorStop(0,   'rgba(244,114,182,0.6)');
+    ringGrad.addColorStop(0.5, 'rgba(167,139,250,0.9)');
+    ringGrad.addColorStop(1,   'rgba(96,165,250,0.6)');
+    ctx.strokeStyle = ringGrad;
+    ctx.lineWidth = 28;
+    ctx.stroke();
+    ctx.restore();
+
+    // 惑星本体
+    const planet = ctx.createRadialGradient(72, 64, 5, 90, 88, 58);
+    planet.addColorStop(0,   '#e9d5ff');
+    planet.addColorStop(0.35,'#a78bfa');
+    planet.addColorStop(1,   '#4c1d95');
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = '#7c3aed';
+    ctx.beginPath();
+    ctx.arc(90, 88, 56, 0, Math.PI*2);
+    ctx.fillStyle = planet;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // 惑星帯
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(90, 88, 56, 0, Math.PI*2);
+    ctx.clip();
+    ctx.globalAlpha = 0.13;
+    ctx.strokeStyle = '#c4b5fd';
+    ctx.lineWidth = 9;
+    ctx.beginPath(); ctx.ellipse(90, 95, 56, 10, 0, 0, Math.PI*2); ctx.stroke();
+    ctx.lineWidth = 7;
+    ctx.beginPath(); ctx.ellipse(90, 82, 50, 8, 0, 0, Math.PI*2); ctx.stroke();
+    ctx.restore();
+    ctx.globalAlpha = 1;
+
+    // ハイライト
+    const hl = ctx.createRadialGradient(68, 62, 2, 72, 68, 34);
+    hl.addColorStop(0, 'rgba(255,255,255,0.38)');
+    hl.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(90, 88, 56, 0, Math.PI*2);
+    ctx.clip();
+    ctx.fillStyle = hl;
+    ctx.fillRect(0, 0, 180, 180);
+    ctx.restore();
+
+    // リング（前側）
+    ctx.save();
+    ctx.translate(90, 96);
+    ctx.scale(1, 0.32);
+    ctx.beginPath();
+    ctx.arc(0, 0, 74, Math.PI, 0, false); // 上半分だけ
+    const ringGrad2 = ctx.createLinearGradient(-74, 0, 74, 0);
+    ringGrad2.addColorStop(0,   'rgba(244,114,182,0.85)');
+    ringGrad2.addColorStop(0.5, 'rgba(167,139,250,1)');
+    ringGrad2.addColorStop(1,   'rgba(96,165,250,0.85)');
+    ctx.strokeStyle = ringGrad2;
+    ctx.lineWidth = 28;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = 'rgba(167,139,250,0.8)';
+    ctx.stroke();
+    ctx.restore();
+
     const link = document.createElement('link');
     link.rel = 'apple-touch-icon';
     link.href = c.toDataURL('image/png');
