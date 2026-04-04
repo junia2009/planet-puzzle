@@ -1129,106 +1129,128 @@ function resizeGame() {
 window.addEventListener('resize', resizeGame);
 window.addEventListener('orientationchange', () => setTimeout(resizeGame, 150));
 
-// ===== PWA: apple-touch-icon を2D Canvasで動的生成 =====
+// ===== PWA: apple-touch-icon を2D Canvasで動的生成（スターウォーズ風） =====
 (function () {
   try {
     const c = document.createElement('canvas');
     c.width = c.height = 180;
     const ctx = c.getContext('2d');
 
-    // 背景グラデーション
-    const bg = ctx.createLinearGradient(0, 0, 180, 180);
-    bg.addColorStop(0,   '#0f0c29');
-    bg.addColorStop(0.5, '#1a0533');
-    bg.addColorStop(1,   '#0d1b4b');
+    // 背景（深宇宙黒＋青みグロー）
+    const bg = ctx.createRadialGradient(90, 80, 10, 90, 80, 105);
+    bg.addColorStop(0,   '#091420');
+    bg.addColorStop(0.62,'#030c18');
+    bg.addColorStop(1,   '#000004');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, 180, 180);
 
-    // 外周グロー
-    const outerGlow = ctx.createRadialGradient(90, 90, 30, 90, 90, 90);
-    outerGlow.addColorStop(0, 'rgba(124,58,237,0.5)');
-    outerGlow.addColorStop(1, 'rgba(15,12,41,0)');
-    ctx.fillStyle = outerGlow;
-    ctx.fillRect(0, 0, 180, 180);
-
-    // 星
-    [[22,25],[158,20],[170,65],[10,110],[168,135],[140,165],[35,158],[90,18]]
-      .forEach(([x,y]) => {
+    // 星フィールド
+    [[14,18,1.1,1],[40,10,0.8,1],[68,22,1,1],[101,7,1.3,1],[130,16,0.8,1],
+     [158,24,1.1,1],[172,50,0.8,1],[10,57,1,1],[170,82,1.1,1],[7,105,0.8,1],
+     [173,116,1,1],[23,142,1.2,1],[152,137,0.8,1],[55,165,1,1],[112,172,1.2,1],
+     [27,34,1.5,2],[155,65,1.4,2],[34,125,1.4,2],[162,156,1.5,2]]
+      .forEach(([x,y,r,t]) => {
         ctx.beginPath();
-        ctx.arc(x, y, 1.5, 0, Math.PI*2);
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.arc(x, y, r, 0, Math.PI*2);
+        ctx.fillStyle = t === 2 ? 'rgba(192,234,255,0.85)' : 'rgba(255,255,255,0.72)';
         ctx.fill();
       });
 
-    // リング（後ろ側）
+    // 惑星グロー
+    const pg = ctx.createRadialGradient(90, 90, 28, 90, 90, 60);
+    pg.addColorStop(0, 'rgba(26,64,96,0.65)');
+    pg.addColorStop(1, 'rgba(0,16,32,0)');
+    ctx.fillStyle = pg;
     ctx.save();
-    ctx.translate(90, 96);
-    ctx.scale(1, 0.32);
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = '#1a4060';
     ctx.beginPath();
-    ctx.arc(0, 0, 74, 0, Math.PI, false); // 下半分だけ
-    const ringGrad = ctx.createLinearGradient(-74, 0, 74, 0);
-    ringGrad.addColorStop(0,   'rgba(244,114,182,0.6)');
-    ringGrad.addColorStop(0.5, 'rgba(167,139,250,0.9)');
-    ringGrad.addColorStop(1,   'rgba(96,165,250,0.6)');
-    ctx.strokeStyle = ringGrad;
-    ctx.lineWidth = 28;
-    ctx.stroke();
-    ctx.restore();
-
-    // 惑星本体
-    const planet = ctx.createRadialGradient(72, 64, 5, 90, 88, 58);
-    planet.addColorStop(0,   '#e9d5ff');
-    planet.addColorStop(0.35,'#a78bfa');
-    planet.addColorStop(1,   '#4c1d95');
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = '#7c3aed';
-    ctx.beginPath();
-    ctx.arc(90, 88, 56, 0, Math.PI*2);
-    ctx.fillStyle = planet;
+    ctx.arc(90, 90, 56, 0, Math.PI*2);
     ctx.fill();
-    ctx.shadowBlur = 0;
+    ctx.restore();
 
-    // 惑星帯
+    // 惑星本体（メタリックシルバー）
+    const pm = ctx.createRadialGradient(76, 68, 4, 90, 90, 52);
+    pm.addColorStop(0,    '#d4e2ec');
+    pm.addColorStop(0.22, '#8aacc0');
+    pm.addColorStop(0.68, '#2e4860');
+    pm.addColorStop(1,    '#0a1828');
+    ctx.beginPath();
+    ctx.arc(90, 90, 52, 0, Math.PI*2);
+    ctx.fillStyle = pm;
+    ctx.fill();
+
+    // 表面ライン（デス・スター風）クリップ
     ctx.save();
     ctx.beginPath();
-    ctx.arc(90, 88, 56, 0, Math.PI*2);
+    ctx.arc(90, 90, 52, 0, Math.PI*2);
     ctx.clip();
-    ctx.globalAlpha = 0.13;
-    ctx.strokeStyle = '#c4b5fd';
-    ctx.lineWidth = 9;
-    ctx.beginPath(); ctx.ellipse(90, 95, 56, 10, 0, 0, Math.PI*2); ctx.stroke();
-    ctx.lineWidth = 7;
-    ctx.beginPath(); ctx.ellipse(90, 82, 50, 8, 0, 0, Math.PI*2); ctx.stroke();
+    // 赤道線
+    ctx.strokeStyle = 'rgba(96,144,176,0.52)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(38, 90); ctx.lineTo(142, 90); ctx.stroke();
+    // 縦線
+    ctx.strokeStyle = 'rgba(96,144,176,0.18)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(90, 38); ctx.lineTo(90, 142); ctx.stroke();
+    // 補助線
+    ctx.strokeStyle = 'rgba(96,144,176,0.13)';
+    ctx.beginPath(); ctx.moveTo(38, 72); ctx.lineTo(142, 72); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(38, 108); ctx.lineTo(142, 108); ctx.stroke();
     ctx.restore();
+
+    // スーパーレーザーくぼみ（デス・スター特徴）
+    const dx = 109, dy = 70;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(90, 90, 52, 0, Math.PI*2);
+    ctx.clip();
+    // 外リング
+    ctx.strokeStyle = 'rgba(128,168,196,0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(dx, dy, 14, 0, Math.PI*2); ctx.stroke();
+    // くぼみ暗部
+    ctx.fillStyle = 'rgba(6,14,24,0.88)';
+    ctx.beginPath(); ctx.arc(dx, dy, 9, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#0a1e30';
+    ctx.beginPath(); ctx.arc(dx, dy, 5, 0, Math.PI*2); ctx.fill();
+    // 光るコア
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#00c8f8';
+    ctx.fillStyle = 'rgba(0,200,248,0.88)';
+    ctx.beginPath(); ctx.arc(dx, dy, 3, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'white';
+    ctx.beginPath(); ctx.arc(dx, dy, 1.5, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    // ライトセーバー光線（水平・赤道上）
+    const sg = ctx.createLinearGradient(0, 0, 180, 0);
+    sg.addColorStop(0,    'rgba(0,200,240,0)');
+    sg.addColorStop(0.2,  'rgba(0,200,240,0.92)');
+    sg.addColorStop(0.5,  'rgba(168,240,255,1)');
+    sg.addColorStop(0.8,  'rgba(0,200,240,0.92)');
+    sg.addColorStop(1,    'rgba(0,200,240,0)');
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#00c8f8';
+    ctx.fillStyle = sg;
+    ctx.fillRect(0, 87, 180, 6);
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 0.8;
+    ctx.fillStyle = sg;
+    ctx.fillRect(0, 89, 180, 2);
     ctx.globalAlpha = 1;
 
     // ハイライト
-    const hl = ctx.createRadialGradient(68, 62, 2, 72, 68, 34);
-    hl.addColorStop(0, 'rgba(255,255,255,0.38)');
+    const hl = ctx.createRadialGradient(74, 64, 2, 78, 70, 30);
+    hl.addColorStop(0, 'rgba(255,255,255,0.30)');
     hl.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.save();
     ctx.beginPath();
-    ctx.arc(90, 88, 56, 0, Math.PI*2);
+    ctx.arc(90, 90, 52, 0, Math.PI*2);
     ctx.clip();
     ctx.fillStyle = hl;
     ctx.fillRect(0, 0, 180, 180);
-    ctx.restore();
-
-    // リング（前側）
-    ctx.save();
-    ctx.translate(90, 96);
-    ctx.scale(1, 0.32);
-    ctx.beginPath();
-    ctx.arc(0, 0, 74, Math.PI, 0, false); // 上半分だけ
-    const ringGrad2 = ctx.createLinearGradient(-74, 0, 74, 0);
-    ringGrad2.addColorStop(0,   'rgba(244,114,182,0.85)');
-    ringGrad2.addColorStop(0.5, 'rgba(167,139,250,1)');
-    ringGrad2.addColorStop(1,   'rgba(96,165,250,0.85)');
-    ctx.strokeStyle = ringGrad2;
-    ctx.lineWidth = 28;
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = 'rgba(167,139,250,0.8)';
-    ctx.stroke();
     ctx.restore();
 
     const link = document.createElement('link');
