@@ -540,7 +540,7 @@
   <div id="overlay-box">
     <div id="overlay-title"></div>
     <div id="overlay-msg"></div>
-    <button id="overlay-btn">もう一度</button>
+    <button id="overlay-btn">タイトルに戻る</button>
   </div>
 </div>
 
@@ -837,7 +837,19 @@ function showOverlay(title, msg) {
 
 document.getElementById('overlay-btn').addEventListener('click', () => {
   document.getElementById('overlay').classList.remove('show');
-  init();
+
+  // ゲーム画面を非表示
+  const gameScreen = document.getElementById('game-screen');
+  gameScreen.classList.remove('visible');
+
+  // タイトル画面を再表示
+  const titleScreen = document.getElementById('title-screen');
+  titleScreen.style.display = '';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      titleScreen.classList.remove('hidden');
+    });
+  });
 });
 
 // ===== ユーティリティ =====
