@@ -312,17 +312,67 @@
       filter: brightness(0.45) saturate(0.5);
     }
 
-    /* タイル種類ごとの背景色（淡いパステル統一） */
-    .tile-0 { background: linear-gradient(145deg, #fff5f5, #fde8e8); }
-    .tile-1 { background: linear-gradient(145deg, #fff8f0, #fdebd0); }
-    .tile-2 { background: linear-gradient(145deg, #fffef0, #fef9e7); }
-    .tile-3 { background: linear-gradient(145deg, #f0fdf6, #e8f8f0); }
-    .tile-4 { background: linear-gradient(145deg, #f0fdfb, #e8f6f3); }
-    .tile-5 { background: linear-gradient(145deg, #f0f8ff, #e8f4fc); }
-    .tile-6 { background: linear-gradient(145deg, #faf0ff, #f3eaf9); }
-    .tile-7 { background: linear-gradient(145deg, #fff0f8, #fde8f1); }
-    .tile-8 { background: linear-gradient(145deg, #f0fdff, #e8f7fa); }
-    .tile-9 { background: linear-gradient(145deg, #f5fff0, #f0f8e8); }
+    /* ===== 惑星タイル個別スタイル ===== */
+    /* 0:☀️太陽 - 燃えるオレンジ〜黄 */
+    .tile-0 {
+      background: linear-gradient(145deg, #fff7e0, #ffe066);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.6), 0 0 12px rgba(255,200,0,0.4);
+      border-color: rgba(255,210,50,0.5);
+    }
+    /* 1:🌕月 - 淡いクレーター灰白 */
+    .tile-1 {
+      background: linear-gradient(145deg, #f5f5e8, #dcdcb0);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5);
+      border-color: rgba(200,200,150,0.4);
+    }
+    /* 2:🌍地球 - 青緑 */
+    .tile-2 {
+      background: linear-gradient(145deg, #e0f4ff, #b3e8cc);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 10px rgba(50,200,150,0.25);
+      border-color: rgba(80,200,160,0.4);
+    }
+    /* 3:🪐土星 - 淡いゴールドリング */
+    .tile-3 {
+      background: linear-gradient(145deg, #fdf6e0, #f5dfa0);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 10px rgba(220,180,80,0.3);
+      border-color: rgba(210,170,70,0.5);
+    }
+    /* 4:🔴火星 - 赤茶 */
+    .tile-4 {
+      background: linear-gradient(145deg, #ffe8e0, #f5b0a0);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 10px rgba(220,80,60,0.25);
+      border-color: rgba(220,100,80,0.4);
+    }
+    /* 5:🔵海王星 - 深めの青 */
+    .tile-5 {
+      background: linear-gradient(145deg, #e0eeff, #a0c4f5);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 10px rgba(60,120,240,0.25);
+      border-color: rgba(80,140,230,0.4);
+    }
+    /* 6:🟠木星 - オレンジ縞模様風 */
+    .tile-6 {
+      background: repeating-linear-gradient(160deg, #fde8c8 0px, #fde8c8 6px, #f5caa0 6px, #f5caa0 12px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.4);
+      border-color: rgba(210,150,80,0.4);
+    }
+    /* 7:🟡金星 - 淡い黄 */
+    .tile-7 {
+      background: linear-gradient(145deg, #fffbe0, #f5e890);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.6), 0 0 10px rgba(240,220,50,0.3);
+      border-color: rgba(220,200,60,0.4);
+    }
+    /* 8:⚫水星 - 暗いグレー */
+    .tile-8 {
+      background: linear-gradient(145deg, #e8e8e8, #c0c0c0);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+      border-color: rgba(160,160,160,0.4);
+    }
+    /* 9:🟣天王星 - 青みがかった紫 */
+    .tile-9 {
+      background: linear-gradient(145deg, #f0eaff, #c8b0f0);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 10px rgba(160,100,240,0.25);
+      border-color: rgba(160,120,230,0.4);
+    }
 
     /* スロットエリア */
     #slot-area {
@@ -495,6 +545,135 @@
       box-shadow: 0 0 20px rgba(167,139,250,0.4);
       transform: translateY(-1px);
     }
+
+    /* ===== クリア専用オーバーレイ ===== */
+    #clear-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      align-items: center;
+      justify-content: center;
+      z-index: 10001;
+      pointer-events: none;
+    }
+    #clear-overlay.show {
+      display: flex;
+      pointer-events: auto;
+    }
+    #clear-box {
+      background: rgba(10,5,30,0.92);
+      border: 1px solid rgba(167,139,250,0.5);
+      border-radius: 28px;
+      padding: 52px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 80px rgba(167,139,250,0.6), 0 0 160px rgba(96,165,250,0.3);
+      animation: clear-box-in 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes clear-box-in {
+      from { transform: scale(0.5) rotate(-4deg); opacity: 0; }
+      to   { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    #clear-box::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa, #f472b6, #a78bfa);
+      background-size: 300% 300%;
+      animation: border-flow 2.5s linear infinite;
+      z-index: -1;
+    }
+    @keyframes border-flow {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+    #clear-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.4rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #fbbf24, #f472b6, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+      animation: clear-title-pop 0.5s 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes clear-title-pop {
+      from { transform: scale(0.3); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    #clear-planet {
+      font-size: 4rem;
+      display: block;
+      margin-bottom: 8px;
+      animation: clear-planet-spin 1s 0.2s ease-out both;
+    }
+    @keyframes clear-planet-spin {
+      from { transform: scale(0) rotate(-360deg); }
+      to   { transform: scale(1) rotate(0deg); }
+    }
+    #clear-msg {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+      animation: fade-in 0.5s 0.6s both;
+    }
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    #clear-btn {
+      margin-top: 28px;
+      padding: 14px 40px;
+      border-radius: 12px;
+      border: 1px solid rgba(167,139,250,0.5);
+      background: linear-gradient(135deg, rgba(167,139,250,0.25), rgba(96,165,250,0.25));
+      color: #fff;
+      font-size: 1rem;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+      animation: fade-in 0.5s 0.8s both;
+      touch-action: manipulation;
+    }
+    #clear-btn:hover {
+      background: linear-gradient(135deg, rgba(167,139,250,0.45), rgba(96,165,250,0.45));
+      box-shadow: 0 0 20px rgba(167,139,250,0.5);
+      transform: translateY(-2px);
+    }
+
+    /* 紙吹雪パーティクル */
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      pointer-events: none;
+      animation: confetti-fall linear forwards;
+      z-index: 10002;
+    }
+    @keyframes confetti-fall {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* キラキラ星バースト */
+    .star-burst {
+      position: fixed;
+      font-size: 1.5rem;
+      pointer-events: none;
+      animation: star-burst-anim ease-out forwards;
+      z-index: 10002;
+    }
+    @keyframes star-burst-anim {
+      0%   { transform: scale(0) rotate(0deg); opacity: 1; }
+      60%  { transform: scale(1.4) rotate(180deg); opacity: 1; }
+      100% { transform: scale(0.5) rotate(360deg) translateY(-60px); opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -542,6 +721,15 @@
     <div id="overlay-title"></div>
     <div id="overlay-msg"></div>
     <button id="overlay-btn">タイトルに戻る</button>
+  </div>
+</div>
+
+<div id="clear-overlay">
+  <div id="clear-box">
+    <span id="clear-planet">🪐</span>
+    <div id="clear-title">MISSION<br>COMPLETE</div>
+    <div id="clear-msg">すべての惑星を解放した！</div>
+    <button id="clear-btn">タイトルに戻る</button>
   </div>
 </div>
 
@@ -727,7 +915,7 @@ function renderSlots() {
 }
 
 function getTileColor(type) {
-  const colors = ['#fde8e8','#fdebd0','#fef9e7','#e8f8f0','#e8f6f3','#e8f4fc','#f3eaf9','#fde8f1','#e8f7fa','#f0f8e8'];
+  const colors = ['#ffe066','#dcdcb0','#b3e8cc','#f5dfa0','#f5b0a0','#a0c4f5','#f5caa0','#f5e890','#c0c0c0','#c8b0f0'];
   return colors[type] || '#f5f5f5';
 }
 
@@ -739,7 +927,7 @@ function updateTileCount() {
 // ===== ゲーム状態チェック =====
 function checkGameState() {
   if (tiles.length === 0) {
-    showOverlay('🎉 クリア！', 'すべてのタイルを消しました！');
+    showClearOverlay();
     gameOver = true;
     return;
   }
@@ -835,6 +1023,58 @@ function showOverlay(title, msg) {
   document.getElementById('overlay-msg').textContent = msg;
   document.getElementById('overlay').classList.add('show');
 }
+
+function showClearOverlay() {
+  document.getElementById('clear-overlay').classList.add('show');
+  launchConfetti();
+}
+
+function launchConfetti() {
+  const colors = ['#a78bfa','#60a5fa','#f472b6','#fbbf24','#34d399','#f87171','#e0c97f'];
+  const emojis = ['⭐','✨','🌟','💫','🪐','🌍','☀️','🌕'];
+
+  // 紙吹雪 80枚
+  for (let i = 0; i < 80; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.background = colors[Math.floor(Math.random() * colors.length)];
+      el.style.width  = (8 + Math.random() * 10) + 'px';
+      el.style.height = (8 + Math.random() * 10) + 'px';
+      el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      el.style.animationDuration = (1.5 + Math.random() * 2.5) + 's';
+      el.style.animationDelay = '0s';
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }, i * 30);
+  }
+
+  // 星バースト 20個
+  for (let i = 0; i < 20; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'star-burst';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = (10 + Math.random() * 80) + 'vw';
+      el.style.top  = (10 + Math.random() * 70) + 'vh';
+      el.style.animationDuration = (0.8 + Math.random() * 1.2) + 's';
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }, i * 100);
+  }
+}
+
+document.getElementById('clear-btn').addEventListener('click', () => {
+  document.getElementById('clear-overlay').classList.remove('show');
+  const gameScreen = document.getElementById('game-screen');
+  gameScreen.classList.remove('visible');
+  const titleScreen = document.getElementById('title-screen');
+  titleScreen.style.display = '';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    titleScreen.classList.remove('hidden');
+  }));
+});
 
 document.getElementById('overlay-btn').addEventListener('click', () => {
   document.getElementById('overlay').classList.remove('show');
