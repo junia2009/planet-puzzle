@@ -23,12 +23,8 @@
         radial-gradient(ellipse at 60% 10%, rgba(180,60,100,0.15) 0%, transparent 40%);
       color: #fff;
       font-family: 'Noto Sans JP', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-end;
+      display: block;
       min-height: 100vh;
-      padding: 20px 16px max(24px, env(safe-area-inset-bottom, 24px));
     }
 
     /* 星背景 */
@@ -51,8 +47,187 @@
       z-index: 0;
     }
 
-    h1 {
+    /* ========== タイトル画面 ========== */
+    #title-screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 5000;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    #title-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(1.04);
+    }
+
+    /* 惑星アニメーション */
+    .planet-orbit {
+      position: relative;
+      width: min(320px, 80vw);
+      height: min(320px, 80vw);
+      margin-bottom: 32px;
+    }
+
+    .planet-main {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: min(9rem, 22vw);
+      animation: planet-float 4s ease-in-out infinite;
+      filter: drop-shadow(0 0 40px rgba(167,139,250,0.8));
+    }
+
+    @keyframes planet-float {
+      0%, 100% { transform: translateY(0px) rotate(-3deg); }
+      50%       { transform: translateY(-18px) rotate(3deg); }
+    }
+
+    .orbit-ring {
+      position: absolute;
+      inset: 10%;
+      border-radius: 50%;
+      border: 1px solid rgba(167,139,250,0.2);
+      animation: orbit-spin 8s linear infinite;
+    }
+
+    .orbit-ring::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: radial-gradient(circle, #60a5fa, #3b82f6);
+      border-radius: 50%;
+      top: -6px;
+      left: calc(50% - 6px);
+      box-shadow: 0 0 10px #60a5fa;
+    }
+
+    @keyframes orbit-spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    .orbit-ring-2 {
+      position: absolute;
+      inset: 25%;
+      border-radius: 50%;
+      border: 1px solid rgba(244,114,182,0.2);
+      animation: orbit-spin 5s linear infinite reverse;
+    }
+
+    .orbit-ring-2::after {
+      content: '';
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      background: radial-gradient(circle, #f472b6, #ec4899);
+      border-radius: 50%;
+      bottom: -4px;
+      left: calc(50% - 4px);
+      box-shadow: 0 0 8px #f472b6;
+    }
+
+    #title-logo {
       font-family: 'Orbitron', sans-serif;
+      font-size: min(3rem, 10vw);
+      font-weight: 900;
+      letter-spacing: 6px;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 0 20px rgba(167,139,250,0.5));
+    }
+
+    #title-sub {
+      font-size: 0.85rem;
+      letter-spacing: 3px;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      margin-bottom: 48px;
+    }
+
+    #start-btn {
+      position: relative;
+      padding: 18px 56px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: #fff;
+      background: transparent;
+      border: 1.5px solid rgba(167,139,250,0.6);
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s;
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #start-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(167,139,250,0.15), rgba(96,165,250,0.15));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    #start-btn:hover::before, #start-btn:active::before { opacity: 1; }
+
+    #start-btn:hover {
+      border-color: rgba(167,139,250,1);
+      box-shadow: 0 0 30px rgba(167,139,250,0.5), inset 0 0 20px rgba(167,139,250,0.1);
+      transform: translateY(-2px);
+    }
+
+    /* 流れ星 */
+    .shooting-star {
+      position: fixed;
+      width: 2px;
+      height: 2px;
+      background: white;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: shoot linear forwards;
+    }
+
+    @keyframes shoot {
+      0%   { transform: translate(0, 0) scaleX(1); opacity: 1; }
+      100% { transform: translate(200px, 200px) scaleX(40); opacity: 0; }
+    }
+
+    /* ゲーム画面 */
+    #game-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      width: 100%;
+      min-height: 100vh;
+      padding: 20px 16px max(24px, env(safe-area-inset-bottom, 24px));
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s;
+      pointer-events: none;
+    }
+
+    #game-screen.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
       font-size: 1.8rem;
       font-weight: 900;
       letter-spacing: 4px;
@@ -323,6 +498,18 @@
 </head>
 <body>
 
+<div id="title-screen">
+  <div class="planet-orbit">
+    <div class="orbit-ring"></div>
+    <div class="orbit-ring-2"></div>
+    <div class="planet-main">🪐</div>
+  </div>
+  <div id="title-logo">PLANET<br>PUZZLE</div>
+  <div id="title-sub">Match the planets · Clear the sky</div>
+  <button id="start-btn">GAME START</button>
+</div>
+
+<div id="game-screen">
 <h1>PLANET PUZZLE</h1>
 
 <div id="info-bar">
@@ -345,6 +532,7 @@
   <button class="skill-btn" id="skill-expand">
     <span class="skill-icon">➕</span>スロット拡張
   </button>
+</div>
 </div>
 
 <div id="overlay">
@@ -720,7 +908,30 @@ if ('serviceWorker' in navigator) {
 
 // ===== スタート =====
 resizeGame();
-init();
+
+// タイトル画面制御
+document.getElementById('start-btn').addEventListener('click', () => {
+  const titleScreen = document.getElementById('title-screen');
+  const gameScreen  = document.getElementById('game-screen');
+
+  titleScreen.classList.add('hidden');
+  setTimeout(() => { titleScreen.style.display = 'none'; }, 650);
+
+  gameScreen.classList.add('visible');
+  init();
+});
+
+// 流れ星を定期生成
+function spawnShootingStar() {
+  const star = document.createElement('div');
+  star.className = 'shooting-star';
+  star.style.top  = Math.random() * 60 + 'vh';
+  star.style.left = Math.random() * 80 + 'vw';
+  star.style.animationDuration = (0.6 + Math.random() * 0.8) + 's';
+  document.body.appendChild(star);
+  star.addEventListener('animationend', () => star.remove());
+}
+setInterval(spawnShootingStar, 2200);
 </script>
 </body>
 </html>
