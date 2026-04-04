@@ -2,7 +2,13 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Planet Puzzle">
+  <meta name="theme-color" content="#a78bfa">
+  <link rel="manifest" href="manifest.json">
   <title>PLANET PUZZLE</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
@@ -21,7 +27,7 @@
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
-      padding: 20px 16px;
+      padding: 20px 16px max(16px, env(safe-area-inset-bottom, 16px));
     }
 
     /* 星背景 */
@@ -76,6 +82,14 @@
       font-size: 1rem;
     }
 
+    /* ゲームエリアラッパ（レスポンシブ高さ調整） */
+    #game-wrapper {
+      position: relative;
+      width: min(560px, calc(100vw - 32px));
+      z-index: 1;
+      margin-bottom: 16px;
+    }
+
     /* ゲームエリア */
     #game-area {
       position: relative;
@@ -84,12 +98,11 @@
       background: rgba(255,255,255,0.03);
       border-radius: 20px;
       border: 1px solid rgba(167,139,250,0.25);
-      margin-bottom: 16px;
       overflow: hidden;
       box-shadow:
         0 0 40px rgba(99,51,153,0.3),
         inset 0 0 60px rgba(0,0,0,0.4);
-      z-index: 1;
+      transform-origin: top left;
     }
 
     /* タイル */
@@ -107,6 +120,8 @@
       border: 1.5px solid rgba(255,255,255,0.35);
       transition: transform 0.12s, box-shadow 0.12s;
       box-shadow: 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .tile:hover:not(.blocked) {
@@ -136,6 +151,7 @@
     #slot-area {
       display: flex;
       gap: 6px;
+      width: min(560px, calc(100vw - 32px));
       background: rgba(255,255,255,0.04);
       backdrop-filter: blur(10px);
       border-radius: 16px;
@@ -144,20 +160,22 @@
       margin-bottom: 16px;
       min-height: 88px;
       align-items: center;
+      overflow-x: auto;
       box-shadow: 0 4px 24px rgba(0,0,0,0.3);
       position: relative;
       z-index: 1;
     }
 
     .slot {
-      width: 58px;
-      height: 58px;
+      width: var(--slot-size, 58px);
+      height: var(--slot-size, 58px);
+      min-width: var(--slot-size, 58px);
       border-radius: 12px;
       border: 1.5px dashed rgba(255,255,255,0.18);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.9rem;
+      font-size: calc(var(--slot-size, 58px) * 0.55);
       transition: all 0.2s;
       background: rgba(255,255,255,0.04);
     }
@@ -178,6 +196,8 @@
     #skill-area {
       display: flex;
       gap: 16px;
+      width: min(560px, calc(100vw - 32px));
+      justify-content: center;
       margin-bottom: 12px;
       position: relative;
       z-index: 1;
@@ -199,7 +219,9 @@
       cursor: pointer;
       transition: all 0.2s;
       color: rgba(255,255,255,0.8);
-      min-width: 90px;
+      min-width: min(90px, calc((100vw - 96px) / 3));
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .skill-btn .skill-icon {
@@ -306,7 +328,9 @@
   残りタイル &nbsp;<span id="tile-count">0</span>
 </div>
 
-<div id="game-area"></div>
+<div id="game-wrapper">
+  <div id="game-area"></div>
+</div>
 
 <div id="slot-area"></div>
 
@@ -552,6 +576,7 @@ document.getElementById('skill-expand').addEventListener('click', () => {
   if (gameOver) return;
   extraSlots += SLOT_EXPAND;
   document.getElementById('skill-expand').disabled = true;
+  resizeGame();
   renderSlots();
 });
 
@@ -638,7 +663,62 @@ function shuffle(arr) {
   return arr;
 }
 
+// ===== レスポンシブ対応 =====
+function resizeGame() {
+  const availW = Math.min(560, window.innerWidth - 32);
+  const scale = availW / 560;
+
+  const wrapper = document.getElementById('game-wrapper');
+  const gameArea = document.getElementById('game-area');
+  if (wrapper && gameArea) {
+    gameArea.style.transform = `scale(${scale})`;
+    wrapper.style.height = (560 * scale) + 'px';
+  }
+
+  // スロットサイズをビューポート幅に応じて動的調整
+  const totalSlots = BASE_SLOTS + extraSlots;
+  const innerW = availW - 32; // padding 16px × 2
+  const gapTotal = (totalSlots - 1) * 6;
+  const slotSize = Math.max(32, Math.min(58, Math.floor((innerW - gapTotal) / totalSlots)));
+  document.documentElement.style.setProperty('--slot-size', slotSize + 'px');
+}
+
+window.addEventListener('resize', resizeGame);
+window.addEventListener('orientationchange', () => setTimeout(resizeGame, 150));
+
+// ===== PWA: apple-touch-icon を2D Canvasで動的生成 =====
+(function () {
+  try {
+    const c = document.createElement('canvas');
+    c.width = c.height = 180;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 180, 180);
+    const g = ctx.createRadialGradient(90, 90, 0, 90, 90, 90);
+    g.addColorStop(0, 'rgba(167,139,250,0.5)');
+    g.addColorStop(1, 'rgba(0,0,30,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 180, 180);
+    ctx.font = '90px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🪐', 90, 95);
+    const link = document.createElement('link');
+    link.rel = 'apple-touch-icon';
+    link.href = c.toDataURL('image/png');
+    document.head.appendChild(link);
+  } catch (e) {}
+})();
+
+// ===== Service Worker 登録 =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
 // ===== スタート =====
+resizeGame();
 init();
 </script>
 </body>

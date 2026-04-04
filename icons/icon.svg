@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="100" fill="#0a0a1a"/>
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#0a0a1a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="planet" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#5b21b6"/>
+    </radialGradient>
+  </defs>
+  <circle cx="256" cy="256" r="256" fill="url(#glow)"/>
+  <!-- Ring (back) -->
+  <ellipse cx="256" cy="272" rx="180" ry="38" fill="none" stroke="#7c3aed" stroke-width="22" stroke-dasharray="1 0" opacity="0.6"/>
+  <!-- Planet -->
+  <circle cx="256" cy="256" r="110" fill="url(#planet)"/>
+  <!-- Planet surface detail -->
+  <ellipse cx="230" cy="225" rx="35" ry="22" fill="rgba(255,255,255,0.12)"/>
+  <!-- Ring (front, over planet) -->
+  <path d="M76 272 Q256 320 436 272" fill="none" stroke="#a78bfa" stroke-width="22" opacity="0.85"/>
+  <!-- Stars -->
+  <circle cx="80"  cy="80"  r="3" fill="white" opacity="0.7"/>
+  <circle cx="420" cy="100" r="2" fill="white" opacity="0.5"/>
+  <circle cx="400" cy="420" r="3" fill="white" opacity="0.6"/>
+  <circle cx="100" cy="400" r="2" fill="white" opacity="0.5"/>
+  <circle cx="460" cy="260" r="2" fill="white" opacity="0.4"/>
+</svg>
