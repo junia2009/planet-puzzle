@@ -285,13 +285,13 @@
     /* タイル */
     .tile {
       position: absolute;
-      width: 60px;
-      height: 60px;
-      border-radius: 12px;
+      width: 70px;
+      height: 70px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.9rem;
+      font-size: 2.2rem;
       cursor: pointer;
       user-select: none;
       border: 1.5px solid rgba(255,255,255,0.35);
@@ -551,13 +551,13 @@
 const TILE_TYPES = ['☀️','🌕','🌍','🪐','🔴','🔵','🟠','🟡','⚫','🟣'];
 const TILE_COUNT_EACH = 27;  // 各タイル種類の枚数（3の倍数）→ 合計270枚
 const GAME_W = 560, GAME_H = 560;
-const TILE_SIZE = 60;
+const TILE_SIZE = 70;
 const BASE_SLOTS = 7;
 const SLOT_EXPAND = 3;
-const LAYERS = 9;             // 積み重ねレイヤー数
-const CELL_SPACING = 50;      // セル間隔（タイル60px > 50px→隣接セルと少し重なる）
-const GRID_COLS = 9;          // 配置グリッド列数
-const GRID_ROWS = 9;          // 配置グリッド行数
+const LAYERS = 12;            // 積み重ねレイヤー数
+const CELL_SPACING = 58;      // セル間隔（タイル70px > 58px→隣接セルに12px重なる）
+const GRID_COLS = 8;          // 配置グリッド列数
+const GRID_ROWS = 8;          // 配置グリッド行数
 const JITTER = 2;             // グリッド位置からのランダムずれ（px）
 
 // ===== 状態 =====
