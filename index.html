@@ -373,6 +373,36 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 10px rgba(160,100,240,0.25);
       border-color: rgba(160,120,230,0.4);
     }
+    /* 10:⭐星 - 輝く黄金 */
+    .tile-10 {
+      background: linear-gradient(145deg, #fffbe0, #ffd700);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.7), 0 0 14px rgba(255,200,0,0.5);
+      border-color: rgba(255,180,0,0.6);
+    }
+    /* 11:☄️彗星 - 赤オレンジ */
+    .tile-11 {
+      background: linear-gradient(145deg, #ffe0cc, #e8603c);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 12px rgba(230,80,40,0.35);
+      border-color: rgba(220,80,40,0.5);
+    }
+    /* 12:🌙三日月 - クリームイエロー */
+    .tile-12 {
+      background: linear-gradient(145deg, #fffde8, #f0e080);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.6), 0 0 10px rgba(230,210,60,0.3);
+      border-color: rgba(210,190,50,0.5);
+    }
+    /* 13:🛸UFO - ティールグリーン */
+    .tile-13 {
+      background: linear-gradient(145deg, #e0fff8, #60d0c0);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 12px rgba(60,200,180,0.35);
+      border-color: rgba(40,180,160,0.5);
+    }
+    /* 14:💫流れ星 - ライトラベンダー */
+    .tile-14 {
+      background: linear-gradient(145deg, #f8f0ff, #d8c0ff);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.6), 0 0 10px rgba(180,140,255,0.3);
+      border-color: rgba(160,120,240,0.4);
+    }
 
     /* スロットエリア */
     #slot-area {
@@ -686,7 +716,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.0.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.1.0</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -736,13 +766,13 @@
 <script>
 // ===== 定数 =====
 // 惑星・天体テーマ（太陽系8惑星＋太陽＋月）
-const TILE_TYPES = ['☀️','🌕','🌍','🪐','🔴','🔵','🟠','🟡','⚫','🟣'];
-const TILE_COUNT_EACH = 27;  // 各タイル種類の枚数（3の倍数）→ 合計270枚
+const TILE_TYPES = ['☀️','🌕','🌍','🪐','🔴','🔵','🟠','🟡','⚫','🟣','⭐','☄️','🌙','🛸','💫'];
+const TILE_COUNT_EACH = 27;  // 各タイル種類の枚数（3の倍数）→ 合計405枚
 const GAME_W = 560, GAME_H = 700;
 const TILE_SIZE = 70;
 const BASE_SLOTS = 7;
 const SLOT_EXPAND = 3;
-const LAYERS = 6;             // 積み重ねレイヤー数（Mahjong式6層）
+const LAYERS = 7;             // 積み重ねレイヤー数（Mahjong式7層）
 const CELL_SPACING = 70;      // 使用しない（TILE_SIZEと同値）
 const GRID_COLS = 7;          // 各層の列数
 const GRID_ROWS = 9;          // 各層の行数（縦スペースを活用）
@@ -828,7 +858,7 @@ function generateTiles() {
   // GRID_ROWS=9, GAME_H=700 → (700-9*70)/2 = 35px
   const baseStartX = Math.round((GAME_W - GRID_COLS * TILE_SIZE) / 2);
   const baseStartY = Math.round((GAME_H - GRID_ROWS * TILE_SIZE) / 2);
-  const tilesPerLayer = Math.floor(pool.length / LAYERS); // 246/6 = 41
+  const tilesPerLayer = Math.floor(pool.length / LAYERS); // 381/7 = 54
 
   for (let layer = 0; layer < LAYERS; layer++) {
     // 偶数層はオフセット0、奇数層は半タイルずらす
@@ -966,7 +996,7 @@ function renderSlots() {
 }
 
 function getTileColor(type) {
-  const colors = ['#ffe066','#b8b8b8','#b3e8cc','#f5dfa0','#f5b0a0','#a0c4f5','#f5caa0','#f5e890','#c0c0c0','#c8b0f0'];
+  const colors = ['#ffe066','#b8b8b8','#b3e8cc','#f5dfa0','#f5b0a0','#a0c4f5','#f5caa0','#f5e890','#c0c0c0','#c8b0f0','#ffd700','#e8603c','#f0e080','#60d0c0','#d8c0ff'];
   return colors[type] || '#f5f5f5';
 }
 
