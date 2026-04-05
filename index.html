@@ -686,7 +686,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 1.12.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 1.13.0</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -755,6 +755,7 @@ let slotTypeOrder = []; // 各タイプの初登場順
 let extraSlots = 0;     // スロット拡張数
 let history = [];       // アンドゥ用スタック [{tiles, slots}]
 let gameOver = false;
+let totalTiles = 0;     // ゲーム開始時の総タイル数
 
 // ===== 初期化 =====
 function init() {
@@ -771,6 +772,7 @@ function init() {
   document.getElementById('skill-expand').disabled = false;
 
   generateTiles();
+  totalTiles = tiles.length + 0; // パイルを含む全タイル数を記録（generateTiles後）
   updateBlockedState();
   renderSlots();
   updateTileCount();
@@ -982,7 +984,10 @@ function checkGameState() {
   }
   const totalSlots = BASE_SLOTS + extraSlots;
   if (slots.length >= totalSlots) {
-    showOverlay('💀 ゲームオーバー', 'スロットがいっぱいになりました。');
+    const removed = totalTiles - tiles.length - slots.length;
+    const pct = Math.floor(removed / totalTiles * 100);
+    showOverlay('💀 ゲームオーバー', `${pct}% クリア！
+あと一歩でした…`);
     gameOver = true;
   }
 }
