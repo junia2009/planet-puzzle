@@ -1010,14 +1010,13 @@ document.getElementById('skill-expand').addEventListener('click', () => {
 });
 
 function shuffleTilePositions() {
-  const gameArea = document.getElementById('game-area');
-  tiles.forEach(tile => {
-    const x = randInt(0, GAME_W - TILE_SIZE);
-    const y = randInt(0, GAME_H - TILE_SIZE);
-    tile.x = x;
-    tile.y = y;
-    tile.elem.style.left = x + 'px';
-    tile.elem.style.top  = y + 'px';
+  // 位置はそのまま、タイルの種類だけをシャッフルする
+  const types = tiles.map(t => t.type);
+  shuffle(types);
+  tiles.forEach((tile, i) => {
+    tile.type = types[i];
+    tile.elem.textContent = TILE_TYPES[types[i]];
+    tile.elem.className = `tile tile-${types[i]}`;
   });
 }
 
