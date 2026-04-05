@@ -686,7 +686,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 1.7.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 1.8.0</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -745,7 +745,7 @@ const SLOT_EXPAND = 3;
 const LAYERS = 3;             // 積み重ねレイヤー数（Mahjong式3層）
 const CELL_SPACING = 70;      // 使用しない（TILE_SIZEと同値）
 const GRID_COLS = 7;          // 各層の列数
-const GRID_ROWS = 6;          // 各層の行数
+const GRID_ROWS = 9;          // 各層の行数（縦スペースを活用）
 const JITTER = 0;             // グリッド配置なのでずれなし
 
 // ===== 状態 =====
@@ -820,9 +820,8 @@ function generateTiles() {
   //   → 上層の1タイルが下層の最大4タイルに跨がる
   //   → 1枚取り除くと真下の最大4枚が露出する
   const HALF = Math.floor(TILE_SIZE / 2); // 35px
-  // グリッド全体の中央揃え基準（偶数層用）
   // GRID_COLS=7, GAME_W=560 → (560-7*70)/2 = 35px
-  // GRID_ROWS=6, GAME_H=700 → (700-6*70)/2 = 140px
+  // GRID_ROWS=9, GAME_H=700 → (700-9*70)/2 = 35px
   const baseStartX = Math.round((GAME_W - GRID_COLS * TILE_SIZE) / 2);
   const baseStartY = Math.round((GAME_H - GRID_ROWS * TILE_SIZE) / 2);
   const tilesPerLayer = Math.floor(pool.length / LAYERS); // 126/3 = 42
