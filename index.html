@@ -271,7 +271,7 @@
     #game-area {
       position: relative;
       width: 560px;
-      height: 560px;
+      height: 700px;
       background: rgba(255,255,255,0.03);
       border-radius: 20px;
       border: 1px solid rgba(167,139,250,0.25);
@@ -738,14 +738,14 @@
 // 惑星・天体テーマ（太陽系8惑星＋太陽＋月）
 const TILE_TYPES = ['☀️','🌕','🌍','🪐','🔴','🔵','🟠','🟡','⚫','🟣'];
 const TILE_COUNT_EACH = 27;  // 各タイル種類の枚数（3の倍数）→ 合計270枚
-const GAME_W = 560, GAME_H = 560;
+const GAME_W = 560, GAME_H = 700;
 const TILE_SIZE = 70;
 const BASE_SLOTS = 7;
 const SLOT_EXPAND = 3;
 const LAYERS = 12;            // 積み重ねレイヤー数
 const CELL_SPACING = 58;      // セル間隔（タイル70px > 58px→隣接セルに12px重なる）
 const GRID_COLS = 8;          // 配置グリッド列数
-const GRID_ROWS = 8;          // 配置グリッド行数
+const GRID_ROWS = 10;          // 配置グリッド行数
 const JITTER = 2;             // グリッド位置からのランダムずれ（px）
 
 // ===== 状態 =====
@@ -1117,7 +1117,7 @@ function resizeGame() {
   const gameArea = document.getElementById('game-area');
   if (wrapper && gameArea) {
     gameArea.style.transform = `scale(${scale})`;
-    wrapper.style.height = (560 * scale) + 'px';
+    wrapper.style.height = (700 * scale) + 'px';
   }
 
   // スロットサイズをビューポート幅に応じて動的調整
