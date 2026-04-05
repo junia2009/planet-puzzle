@@ -823,11 +823,28 @@ function generateTiles() {
 
   // ===== 通常タイル生成 =====
   // セル間がタイルより狭いため隣接タイルが少し重なり、相互ブロックが発生する
-  const cellCount = GRID_COLS * GRID_ROWS;
-  // セル座標配列を作ってシャッフルし、各タイルに割り当てる
+
+  // 禁止セル（タイルを置かない箇所）= 不規則なボード形状を作る
+  // セルインデックス = col + row * GRID_COLS
+  const forbidden = new Set();
+  const F = (col, row) => { if (col >= 0 && col < GRID_COLS && row >= 0 && row < GRID_ROWS) forbidden.add(col + row * GRID_COLS); };
+  // 左端列（col=0）はパイル専用のため禁止
+  for (let r = 0; r < GRID_ROWS; r++) F(0, r);
+  // 右上コーナー
+  F(6, 0); F(7, 0); F(7, 1);
+  // 右下コーナー
+  F(6, 8); F(7, 8); F(5, 9); F(6, 9); F(7, 9);
+  // 左下エリア
+  F(1, 9); F(2, 9); F(3, 9);
+
+  // 禁止セルを除いた有効セルのみからランダム割り当て
+  const validCells = [];
+  for (let i = 0; i < GRID_COLS * GRID_ROWS; i++) {
+    if (!forbidden.has(i)) validCells.push(i);
+  }
   const cellAssignments = [];
   for (let i = 0; i < pool.length; i++) {
-    cellAssignments.push(i % cellCount);
+    cellAssignments.push(validCells[i % validCells.length]);
   }
   shuffle(cellAssignments);
 
