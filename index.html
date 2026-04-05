@@ -686,7 +686,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 1.5.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 1.6.0</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -742,11 +742,11 @@ const GAME_W = 560, GAME_H = 700;
 const TILE_SIZE = 70;
 const BASE_SLOTS = 7;
 const SLOT_EXPAND = 3;
-const LAYERS = 3;             // 積み重ねレイヤー数
-const CELL_SPACING = 35;      // セル間隔（TILE_SIZE/2=35px → 隣は半分・斜め隣は1/4重なるクリーンパターン）
+const LAYERS = 5;             // 積み重ねレイヤー数
+const CELL_SPACING = 60;      // セル間隔（タイル70px → 隣に10px重なる）
 const GRID_COLS = 8;          // 配置グリッド列数
-const GRID_ROWS = 14;         // 配置グリッド行数
-const JITTER = 0;             // グリッド位置からのランダムずれ（0=クリーン配置）
+const GRID_ROWS = 10;         // 配置グリッド行数
+const JITTER = 3;             // グリッド位置からのランダムずれ（px）
 
 // ===== 状態 =====
 let tiles = [];         // { id, type, x, y, layer, elem, blocked }
@@ -792,20 +792,19 @@ function generateTiles() {
   let id = 0;
 
   // ===== パイル（深積み）生成 =====
-  // 同一位置にタイルを縦にずらして積み重ねるデック状の山
   const PILE_EACH = 12;  // 1パイルあたりのタイル数
   const PILE_STEP = 5;   // タイル1枚ごとの縦ずれ(px)
   const pilePositions = [
-    { col: 0, row: 3 },  // 左端・上側
-    { col: 0, row: 10 }, // 左端・下側
+    { col: 0, row: 2 },  // 左端・上側
+    { col: 0, row: 7 },  // 左端・下側
   ];
   pilePositions.forEach(({ col, row }) => {
     const baseX = marginX + col * CELL_SPACING;
     const baseY = marginY + row * CELL_SPACING;
     for (let d = 0; d < PILE_EACH; d++) {
-      const p = pool.shift(); // プール先頭から取得（d=0がトップ＝最前面）
+      const p = pool.shift();
       const tileY = baseY + d * PILE_STEP;
-      const zIndex = 1000 - d * 5; // d=0が最高zIndex（最前面）
+      const zIndex = 1000 - d * 5;
       const elem = document.createElement('div');
       elem.className = `tile tile-${p.type}`;
       elem.style.left   = baseX + 'px';
@@ -822,50 +821,59 @@ function generateTiles() {
   });
 
   // ===== 通常タイル生成 =====
-  // セル間がタイルより狭いため隣接タイルが少し重なり、相互ブロックが発生する
+  // 設計思想:
+  //   - 各層(layer)に対してグリッド上の「配置可能セル」を割り当てる
+  //   - 下層ほどグリッド全体を広くカバーし、上層ほど中央寄りに絞る
+  //   - 上層は zIndex が高いので必ず最前面に出る → 最初から約10枚が取れる
+  //   - 1セルあたり1タイルのみ配置（同セルに重ならない）
 
-  // 禁止セル（タイルを置かない箇所）= 不規則なボード形状を作る
-  // セルインデックス = col + row * GRID_COLS
-  const forbidden = new Set();
-  const F = (col, row) => { if (col >= 0 && col < GRID_COLS && row >= 0 && row < GRID_ROWS) forbidden.add(col + row * GRID_COLS); };
-  // 左端列（col=0）はパイル専用のため禁止
-  for (let r = 0; r < GRID_ROWS; r++) F(0, r);
-  // 右上コーナー
-  F(6, 0); F(7, 0); F(7, 1);
-  // 右下コーナー
-  F(6, 12); F(7, 12); F(5, 13); F(6, 13); F(7, 13);
-  // 左下エリア
-  F(1, 13); F(2, 13); F(3, 13);
-
-  // 禁止セルを除いた有効セルのみからランダム割り当て
-  const validCells = [];
-  for (let i = 0; i < GRID_COLS * GRID_ROWS; i++) {
-    if (!forbidden.has(i)) validCells.push(i);
+  // col=0はパイル専用
+  const allCells = [];
+  for (let r = 0; r < GRID_ROWS; r++) {
+    for (let c = 1; c < GRID_COLS; c++) {
+      allCells.push({ col: c, row: r });
+    }
   }
-  const cellAssignments = [];
-  for (let i = 0; i < pool.length; i++) {
-    cellAssignments.push(validCells[i % validCells.length]);
-  }
-  shuffle(cellAssignments);
 
-  pool.forEach((p, idx) => {
-    const layer = Math.floor(idx / (pool.length / LAYERS));
-    const cellIdx = cellAssignments[idx];
-    const col = cellIdx % GRID_COLS;
-    const row = Math.floor(cellIdx / GRID_COLS);
-    const baseX = marginX + col * CELL_SPACING;
-    const baseY = marginY + row * CELL_SPACING;
+  // 各層に使うセルの候補を決める（層が上がるほど中央行に絞る）
+  // layer 0(最下層)   : 全行
+  // layer 1           : 行 1〜8
+  // layer 2           : 行 2〜7
+  // layer 3           : 行 3〜6
+  // layer 4(最上層)   : 行 3〜6（最上層は確実に中央に固める）
+  const layerRowRanges = [
+    { rowMin: 0, rowMax: GRID_ROWS - 1 },
+    { rowMin: 1, rowMax: GRID_ROWS - 2 },
+    { rowMin: 2, rowMax: GRID_ROWS - 3 },
+    { rowMin: 3, rowMax: GRID_ROWS - 4 },
+    { rowMin: 3, rowMax: GRID_ROWS - 4 },
+  ];
+
+  // pool を LAYERS 層に均等分割してシャッフル
+  const shuffledPool = [...pool];
+  shuffle(shuffledPool);
+  const perLayer = Math.ceil(shuffledPool.length / LAYERS);
+
+  shuffledPool.forEach((p, idx) => {
+    const layer = Math.min(Math.floor(idx / perLayer), LAYERS - 1);
+    const { rowMin, rowMax } = layerRowRanges[layer];
+    // この層で使えるセル候補
+    const candidates = allCells.filter(c => c.row >= rowMin && c.row <= rowMax);
+    const cell = candidates[Math.floor(Math.random() * candidates.length)];
+    const baseX = marginX + cell.col * CELL_SPACING;
+    const baseY = marginY + cell.row * CELL_SPACING;
     const x = Math.max(0, Math.min(GAME_W - TILE_SIZE, baseX + randInt(-JITTER, JITTER)));
     const y = Math.max(0, Math.min(GAME_H - TILE_SIZE, baseY + randInt(-JITTER, JITTER)));
-    const zIndex = 10 + row * 20 + layer * 5;
+    // 上層ほど高い zIndex → 必ず前面に出る
+    const zIndex = 100 + layer * 60 + randInt(0, 20);
 
     const elem = document.createElement('div');
     elem.className = `tile tile-${p.type}`;
-    elem.style.left = x + 'px';
-    elem.style.top  = y + 'px';
+    elem.style.left   = x + 'px';
+    elem.style.top    = y + 'px';
     elem.style.zIndex = zIndex;
-    elem.textContent = TILE_TYPES[p.type];
-    elem.dataset.id = id;
+    elem.textContent  = TILE_TYPES[p.type];
+    elem.dataset.id   = id;
 
     const tile = { id, type: p.type, x, y, layer, zIndex, elem, blocked: false };
     tiles.push(tile);
