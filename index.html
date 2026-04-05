@@ -686,7 +686,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 1.4.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 1.5.0</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -742,11 +742,11 @@ const GAME_W = 560, GAME_H = 700;
 const TILE_SIZE = 70;
 const BASE_SLOTS = 7;
 const SLOT_EXPAND = 3;
-const LAYERS = 7;             // 積み重ねレイヤー数
-const CELL_SPACING = 66;      // セル間隔（タイル70px > 66px→隣接セルに4px重なる）
+const LAYERS = 3;             // 積み重ねレイヤー数
+const CELL_SPACING = 35;      // セル間隔（TILE_SIZE/2=35px → 隣は半分・斜め隣は1/4重なるクリーンパターン）
 const GRID_COLS = 8;          // 配置グリッド列数
-const GRID_ROWS = 10;          // 配置グリッド行数
-const JITTER = 2;             // グリッド位置からのランダムずれ（px）
+const GRID_ROWS = 14;         // 配置グリッド行数
+const JITTER = 0;             // グリッド位置からのランダムずれ（0=クリーン配置）
 
 // ===== 状態 =====
 let tiles = [];         // { id, type, x, y, layer, elem, blocked }
@@ -796,8 +796,8 @@ function generateTiles() {
   const PILE_EACH = 12;  // 1パイルあたりのタイル数
   const PILE_STEP = 5;   // タイル1枚ごとの縦ずれ(px)
   const pilePositions = [
-    { col: 0, row: 2 },  // 左端・上側
-    { col: 0, row: 7 },  // 左端・下側
+    { col: 0, row: 3 },  // 左端・上側
+    { col: 0, row: 10 }, // 左端・下側
   ];
   pilePositions.forEach(({ col, row }) => {
     const baseX = marginX + col * CELL_SPACING;
@@ -833,9 +833,9 @@ function generateTiles() {
   // 右上コーナー
   F(6, 0); F(7, 0); F(7, 1);
   // 右下コーナー
-  F(6, 8); F(7, 8); F(5, 9); F(6, 9); F(7, 9);
+  F(6, 12); F(7, 12); F(5, 13); F(6, 13); F(7, 13);
   // 左下エリア
-  F(1, 9); F(2, 9); F(3, 9);
+  F(1, 13); F(2, 13); F(3, 13);
 
   // 禁止セルを除いた有効セルのみからランダム割り当て
   const validCells = [];
@@ -857,7 +857,7 @@ function generateTiles() {
     const baseY = marginY + row * CELL_SPACING;
     const x = Math.max(0, Math.min(GAME_W - TILE_SIZE, baseX + randInt(-JITTER, JITTER)));
     const y = Math.max(0, Math.min(GAME_H - TILE_SIZE, baseY + randInt(-JITTER, JITTER)));
-    const zIndex = 10 + layer * 30 + randInt(0, 10);
+    const zIndex = 10 + row * 20 + layer * 5;
 
     const elem = document.createElement('div');
     elem.className = `tile tile-${p.type}`;
