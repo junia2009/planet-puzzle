@@ -833,7 +833,9 @@ function updateBlockedState() {
   tiles.forEach(t => {
     t.blocked = tiles.some(other => {
       if (other.id === t.id) return false;
-      if (other.zIndex <= t.zIndex) return false;
+      // zIndexが低ければブロックしない。同じzIndexの場合はid大（DOM後方）が視覚的に上
+      if (other.zIndex < t.zIndex) return false;
+      if (other.zIndex === t.zIndex && other.id <= t.id) return false;
       return rectsOverlap(t, other);
     });
     t.elem.classList.toggle('blocked', t.blocked);
