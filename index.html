@@ -319,11 +319,11 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.6), 0 0 12px rgba(255,200,0,0.4);
       border-color: rgba(255,210,50,0.5);
     }
-    /* 1:🌕月 - 淡いクレーター灰白 */
+    /* 1:🌕月 - クレーター灰 */
     .tile-1 {
-      background: linear-gradient(145deg, #f5f5e8, #dcdcb0);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5);
-      border-color: rgba(200,200,150,0.4);
+      background: linear-gradient(145deg, #e8e8e8, #b0b0b0);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.5);
+      border-color: rgba(160,160,160,0.5);
     }
     /* 2:🌍地球 - 青緑 */
     .tile-2 {
@@ -686,7 +686,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 1.11.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 1.12.0</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -964,7 +964,7 @@ function renderSlots() {
 }
 
 function getTileColor(type) {
-  const colors = ['#ffe066','#dcdcb0','#b3e8cc','#f5dfa0','#f5b0a0','#a0c4f5','#f5caa0','#f5e890','#c0c0c0','#c8b0f0'];
+  const colors = ['#ffe066','#b8b8b8','#b3e8cc','#f5dfa0','#f5b0a0','#a0c4f5','#f5caa0','#f5e890','#c0c0c0','#c8b0f0'];
   return colors[type] || '#f5f5f5';
 }
 
