@@ -785,14 +785,45 @@ function generateTiles() {
   });
   shuffle(pool);
 
-  // セル間がタイルより狭いため隣接タイルが少し重なり、相互ブロックが発生する
   const gridW = GRID_COLS * CELL_SPACING;
   const gridH = GRID_ROWS * CELL_SPACING;
   const marginX = Math.floor((GAME_W - gridW) / 2);
   const marginY = Math.floor((GAME_H - gridH) / 2);
-  const cellCount = GRID_COLS * GRID_ROWS;
   let id = 0;
 
+  // ===== パイル（深積み）生成 =====
+  // 同一位置にタイルを縦にずらして積み重ねるデック状の山
+  const PILE_EACH = 12;  // 1パイルあたりのタイル数
+  const PILE_STEP = 5;   // タイル1枚ごとの縦ずれ(px)
+  const pilePositions = [
+    { col: 0, row: 2 },  // 左端・上側
+    { col: 0, row: 7 },  // 左端・下側
+  ];
+  pilePositions.forEach(({ col, row }) => {
+    const baseX = marginX + col * CELL_SPACING;
+    const baseY = marginY + row * CELL_SPACING;
+    for (let d = 0; d < PILE_EACH; d++) {
+      const p = pool.shift(); // プール先頭から取得（d=0がトップ＝最前面）
+      const tileY = baseY + d * PILE_STEP;
+      const zIndex = 1000 - d * 5; // d=0が最高zIndex（最前面）
+      const elem = document.createElement('div');
+      elem.className = `tile tile-${p.type}`;
+      elem.style.left   = baseX + 'px';
+      elem.style.top    = tileY + 'px';
+      elem.style.zIndex = zIndex;
+      elem.textContent  = TILE_TYPES[p.type];
+      elem.dataset.id   = id;
+      const tile = { id, type: p.type, x: baseX, y: tileY, layer: 20, zIndex, elem, blocked: false };
+      tiles.push(tile);
+      elem.addEventListener('click', () => onTileClick(tile.id));
+      gameArea.appendChild(elem);
+      id++;
+    }
+  });
+
+  // ===== 通常タイル生成 =====
+  // セル間がタイルより狭いため隣接タイルが少し重なり、相互ブロックが発生する
+  const cellCount = GRID_COLS * GRID_ROWS;
   // セル座標配列を作ってシャッフルし、各タイルに割り当てる
   const cellAssignments = [];
   for (let i = 0; i < pool.length; i++) {
