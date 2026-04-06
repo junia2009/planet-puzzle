@@ -207,6 +207,27 @@
       100% { transform: translate(200px, 200px) scaleX(40); opacity: 0; }
     }
 
+    /* 戦闘機 */
+    .ship-wrap {
+      position: fixed;
+      left: 0;
+      pointer-events: none;
+      filter: drop-shadow(0 0 5px rgba(140,210,255,0.45));
+    }
+    .ship-flip { display: inline-block; transform: scaleX(-1); }
+    @keyframes ship-ltr {
+      from { transform: translateX(-90px); opacity: 0; }
+      7%   { opacity: 0.68; }
+      93%  { opacity: 0.68; }
+      to   { transform: translateX(calc(100vw + 90px)); opacity: 0; }
+    }
+    @keyframes ship-rtl {
+      from { transform: translateX(calc(100vw + 90px)); opacity: 0; }
+      7%   { opacity: 0.68; }
+      93%  { opacity: 0.68; }
+      to   { transform: translateX(-90px); opacity: 0; }
+    }
+
     /* ゲーム画面 */
     #game-screen {
       display: flex;
@@ -714,7 +735,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.8.3</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.9.0</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -1718,6 +1739,76 @@ function spawnShootingStar() {
   star.addEventListener('animationend', () => star.remove());
 }
 setInterval(spawnShootingStar, 2200);
+
+// 戦闘機（Xウイング系・タイファイター糵）
+function _xwingSVG(w) {
+  const h = Math.round(w * 38 / 70);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 70 38">
+    <polygon points="10,19 0,5 18,14" fill="#9ea2a8"/>
+    <polygon points="10,19 0,33 18,24" fill="#9ea2a8"/>
+    <rect x="0" y="3" width="16" height="4" rx="1" fill="#8a8e94"/>
+    <rect x="0" y="31" width="16" height="4" rx="1" fill="#8a8e94"/>
+    <rect x="8" y="16" width="54" height="6" rx="3" fill="#bec2c8"/>
+    <polygon points="62,16 70,19 62,22" fill="#9a9ea4"/>
+    <ellipse cx="38" cy="19" rx="5" ry="4" fill="#1e2e3e"/>
+    <ellipse cx="37" cy="18.5" rx="2.2" ry="1.5" fill="#5599cc" opacity="0.8"/>
+    <ellipse cx="9" cy="19" rx="6" ry="4.5" fill="#ff4400" opacity="0.9"/>
+    <ellipse cx="9" cy="19" rx="3.5" ry="2.5" fill="#ffaa00"/>
+    <ellipse cx="9" cy="19" rx="1.5" ry="1" fill="#ffffaa"/>
+    <rect x="16" y="5" width="4" height="4" rx="1" fill="#3366aa" opacity="0.9"/>
+  </svg>`;
+}
+
+function _tieSVG(w) {
+  const h = Math.round(w * 50 / 66);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 66 50">
+    <polygon points="0,2 19,10 19,40 0,48" fill="#2a3a2a"/>
+    <line x1="6" y1="4" x2="6" y2="46" stroke="#3a5a3a" stroke-width="1"/>
+    <line x1="12" y1="5.6" x2="12" y2="44.4" stroke="#3a5a3a" stroke-width="1"/>
+    <line x1="1" y1="13" x2="18" y2="16" stroke="#3a5a3a" stroke-width="0.8"/>
+    <line x1="1" y1="25" x2="18" y2="25" stroke="#3a5a3a" stroke-width="0.8"/>
+    <line x1="1" y1="37" x2="18" y2="34" stroke="#3a5a3a" stroke-width="0.8"/>
+    <polygon points="66,2 47,10 47,40 66,48" fill="#2a3a2a"/>
+    <line x1="60" y1="4" x2="60" y2="46" stroke="#3a5a3a" stroke-width="1"/>
+    <line x1="54" y1="5.6" x2="54" y2="44.4" stroke="#3a5a3a" stroke-width="1"/>
+    <line x1="65" y1="13" x2="48" y2="16" stroke="#3a5a3a" stroke-width="0.8"/>
+    <line x1="65" y1="25" x2="48" y2="25" stroke="#3a5a3a" stroke-width="0.8"/>
+    <line x1="65" y1="37" x2="48" y2="34" stroke="#3a5a3a" stroke-width="0.8"/>
+    <rect x="18" y="23" width="8" height="3" fill="#666"/>
+    <rect x="40" y="23" width="8" height="3" fill="#666"/>
+    <circle cx="33" cy="25" r="10" fill="#222"/>
+    <polygon points="33,17 38.2,20.5 38.2,27.5 33,31 27.8,27.5 27.8,20.5" fill="#001500" stroke="#00bb00" stroke-width="1"/>
+    <ellipse cx="31" cy="23.5" rx="2.5" ry="1.8" fill="#00ff44" opacity="0.35"/>
+  </svg>`;
+}
+
+function spawnSpaceship() {
+  if (!document.getElementById('game-screen').classList.contains('visible')) return;
+  const goRTL = Math.random() < 0.5;
+  const isXW  = Math.random() < 0.5;
+  const svgW  = 42 + Math.round(Math.random() * 42); // 42〜84px
+  const yPct  = 4 + Math.random() * 72;
+  const dur   = (7 + Math.random() * 6).toFixed(1);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'ship-wrap';
+  wrap.style.top  = yPct + 'vh';
+  wrap.style.animation = `ship-${goRTL ? 'rtl' : 'ltr'} ${dur}s linear forwards`;
+
+  if (goRTL) {
+    const flip = document.createElement('div');
+    flip.className = 'ship-flip';
+    flip.innerHTML = isXW ? _xwingSVG(svgW) : _tieSVG(svgW);
+    wrap.appendChild(flip);
+  } else {
+    wrap.innerHTML = isXW ? _xwingSVG(svgW) : _tieSVG(svgW);
+  }
+
+  // bodyの先頭に挿入→ゲーム画面の背後に描画される
+  document.body.insertBefore(wrap, document.body.firstChild);
+  wrap.addEventListener('animationend', () => wrap.remove());
+}
+setInterval(spawnSpaceship, 4500);
 </script>
 </body>
 </html>
