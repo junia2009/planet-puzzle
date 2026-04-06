@@ -735,7 +735,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.9.3</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.9.4</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -1792,12 +1792,12 @@ function _tieSVG(w) {
     <line x1="80" y1="32" x2="95" y2="32" stroke="#1a3a1a" stroke-width="0.7"/>
     <line x1="80" y1="46" x2="95" y2="46" stroke="#1a3a1a" stroke-width="0.7"/>
     <!-- アーム（細い） -->
-    <rect x="16" y="30" width="13" height="4" fill="#3a3a3a" rx="1"/>
-    <rect x="67" y="30" width="13" height="4" fill="#3a3a3a" rx="1"/>
+    <rect x="16" y="29" width="13" height="6" fill="#3a3a3a" rx="1"/>
+    <rect x="67" y="29" width="13" height="6" fill="#3a3a3a" rx="1"/>
     <!-- コックピット -->
-    <circle cx="48" cy="32" r="12" fill="#0d0d0d" stroke="#2a2a2a" stroke-width="0.8"/>
-    <polygon points="48,23 55,27.5 55,36.5 48,41 41,36.5 41,27.5" fill="#001500" stroke="#00bb00" stroke-width="1.2"/>
-    <ellipse cx="46" cy="29" rx="2.8" ry="2" fill="#00ff55" opacity="0.25"/>
+    <circle cx="48" cy="32" r="16" fill="#0d0d0d" stroke="#2a2a2a" stroke-width="0.9"/>
+    <polygon points="48,22 57,27 57,37 48,42 39,37 39,27" fill="#001500" stroke="#00bb00" stroke-width="1.4"/>
+    <ellipse cx="45.5" cy="28.5" rx="3.5" ry="2.5" fill="#00ff55" opacity="0.28"/>
   </svg>`;
 }
 
@@ -1805,7 +1805,7 @@ function spawnSpaceship() {
   if (!document.getElementById('game-screen').classList.contains('visible')) return;
   const goRTL = Math.random() < 0.5;
   const isXW  = Math.random() < 0.5;
-  const svgW  = 42 + Math.round(Math.random() * 42); // 42〜84px
+  const svgW  = 30 + Math.round(Math.random() * 30); // 30〜60px
   const yPct  = 4 + Math.random() * 72;
   const dur   = (7 + Math.random() * 6).toFixed(1);
 
