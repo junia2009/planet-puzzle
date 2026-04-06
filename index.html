@@ -724,7 +724,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.12.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.12.1</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -936,154 +936,177 @@ const SFX = (() => {
         // マスターゲイン（フェードイン）
         const master = ac.createGain();
         master.gain.setValueAtTime(0, ac.currentTime);
-        master.gain.linearRampToValueAtTime(0.46, ac.currentTime + 2.5);
+        master.gain.linearRampToValueAtTime(0.44, ac.currentTime + 3.0);
         master.connect(ac.destination);
         this._bgmMaster = master;
 
-        // リバーブ（コンボルバー近似：ディレイ＋フィードバック）
-        const makeReverb = () => {
-          const delay = ac.createDelay(0.6);
-          const fb = ac.createGain();
-          const wet = ac.createGain();
-          delay.delayTime.value = 0.35;
-          fb.gain.value = 0.38;
-          wet.gain.value = 0.32;
-          delay.connect(fb); fb.connect(delay);
-          delay.connect(wet); wet.connect(master);
-          return delay;
-        };
-        const reverb = makeReverb();
+        // リバーブ（ディレイ+フィードバック）
+        const delay1 = ac.createDelay(1.0);
+        const delay2 = ac.createDelay(0.7);
+        const fbGain  = ac.createGain();
+        const wetGain = ac.createGain();
+        delay1.delayTime.value = 0.42;
+        delay2.delayTime.value = 0.28;
+        fbGain.gain.value  = 0.36;
+        wetGain.gain.value = 0.28;
+        delay1.connect(delay2); delay2.connect(fbGain);
+        fbGain.connect(delay1); delay1.connect(wetGain);
+        wetGain.connect(master);
+        const reverb = delay1;
 
-        // 弦楽ドローン（E1, B1, E2 — Eメジャー基音）
+        // 弦楽ドローン（E1/B1/E2 — チェロ・コントラバス風）
         const makeDrone = (freq, vol, detune = 0) => {
-          const o = ac.createOscillator();
-          const g = ac.createGain();
-          const f = ac.createBiquadFilter();
-          f.type = 'lowpass'; f.frequency.value = 900;
-          o.type = 'triangle';
-          o.frequency.value = freq;
-          o.detune.value = detune;
+          const o   = ac.createOscillator();
+          const lfo = ac.createOscillator();
+          const lfoG = ac.createGain();
+          const g   = ac.createGain();
+          const f   = ac.createBiquadFilter();
+          f.type = 'lowpass'; f.frequency.value = 700; f.Q.value = 0.8;
+          lfo.frequency.value = 0.22; lfoG.gain.value = vol * 0.15;
+          lfo.connect(lfoG); lfoG.connect(g.gain);
+          o.type = 'triangle'; o.frequency.value = freq; o.detune.value = detune;
           g.gain.value = vol;
-          o.connect(f); f.connect(g);
-          g.connect(master); g.connect(reverb);
-          o.start();
-          this._bgmNodes.push(o);
+          o.connect(f); f.connect(g); g.connect(master); g.connect(reverb);
+          lfo.start(); o.start();
+          this._bgmNodes.push(o, lfo);
         };
-        makeDrone(41.2,  0.30);   // E1
-        makeDrone(41.2,  0.12, 6);// E1 detuned
-        makeDrone(61.7,  0.20);   // B1
-        makeDrone(82.4,  0.16);   // E2
+        makeDrone(41.2,  0.28);
+        makeDrone(41.2,  0.11,  8);
+        makeDrone(61.7,  0.18);
+        makeDrone(82.4,  0.12);
 
         // -----------------------------------------------
-        // ヨーダのテーマ メロディノート定義
-        // E major: E=82.4, F#=92.5, G#=103.8, A=110, B=123.5, C#=138.6, D#=155.6, E=164.8
+        // ヨーダのテーマ 音符定義（Eメジャー）
         // -----------------------------------------------
         const E3=164.8, Fs3=185.0, Gs3=207.7, A3=220.0, B3=246.9,
-              Cs4=277.2, D4=293.7, Ds4=311.1, E4=329.6, Fs4=370.0,
-              Gs4=415.3, A4=440.0, B4=493.9, E2=82.4, B2=123.5, A2=110.0;
+              Cs4=277.2, D4=293.7,  E4=329.6,  Fs4=370.0, Gs4=415.3,
+              A4=440.0,  B4=493.9,
+              E2=82.4,   B2=123.5,  Fs2=92.5,  A2=110.0,  Cs3=138.6;
 
-        // テンポ: ♩=88 → 1拍 = 682ms
-        const BPM = 88;
-        const Q = 60000 / BPM;   // 四分音符ms
-        const H = Q * 2;         // 二分音符
-        const DQ = Q * 1.5;      // 付点四分
-        const E = Q * 0.5;       // 八分音符
-        const DH = Q * 3;        // 付点二分
+        // BPM=84、♩=714ms
+        const BPM = 84;
+        const Q  = 60000 / BPM;
+        const H  = Q * 2;
+        const DQ = Q * 1.5;
+        const E  = Q * 0.5;
+        const DH = Q * 3;
+        const W  = Q * 4;
 
-        // メロディ配列: [周波数, 長さms, 音量]
-        // ヨーダのテーマ主題（近似）
-        const phrase = [
-          [E3,  E,   0.55], [Fs3, E,  0.52], [Gs3, Q,  0.58],
-          [A3,  DQ,  0.62], [B3,  E,  0.52],
-          [Cs4, Q,   0.60], [B3,  Q,  0.52],
-          [A3,  H,   0.65],
-          [0,   Q*0.5, 0],                    // 休符
-          [Gs3, E,   0.48], [Fs3, E,  0.45],
-          [E3,  DQ,  0.58], [Fs3, E,  0.48],
-          [Gs3, Q,   0.52], [E3,  H,  0.60],
-          [0,   Q,   0],                      // 休符
-          [B3,  E,   0.55], [Cs4, E,  0.52], [D4,  Q,  0.58],
-          [Cs4, DQ,  0.62], [B3,  E,  0.50],
-          [A3,  Q,   0.60], [Gs3, Q,  0.52],
-          [Fs3, H,   0.62],
-          [0,   Q*0.5, 0],
-          [E3,  E,   0.50], [Fs3, E,  0.48],
-          [Gs3, Q,   0.54], [A3,  DQ, 0.60],
-          [B3,  E,   0.52], [E4,  DH, 0.68],
-          [0,   H,   0],
+        // [周波数, 長さms, 音量0-1]
+        // ヨーダのテーマ主題 A（8小節）
+        const phraseA = [
+          [E3,  E,  0.58],[Fs3, E,  0.54],[Gs3, Q,  0.62],
+          [A3,  DQ, 0.68],[B3,  E,  0.55],
+          [Cs4, Q,  0.65],[B3,  Q,  0.55],
+          [A3,  H,  0.70],
+          [0,   E,  0   ],
+          [Gs3, E,  0.52],[Fs3, E,  0.48],
+          [E3,  DQ, 0.62],[Fs3, E,  0.50],
+          [Gs3, Q,  0.56],[E3,  DH, 0.64],
+          [0,   Q,  0   ],
+        ];
+        // 主題 B（橋渡し句）
+        const phraseB = [
+          [B3,  E,  0.56],[Cs4, E,  0.54],[D4,  Q,  0.62],
+          [Cs4, DQ, 0.66],[B3,  E,  0.52],
+          [A3,  Q,  0.62],[Gs3, Q,  0.55],
+          [Fs3, DH, 0.65],
+          [0,   E,  0   ],
+          [E3,  E,  0.52],[Fs3, E,  0.50],
+          [Gs3, Q,  0.58],[A3,  DQ, 0.64],
+          [B3,  E,  0.55],[E4,  H,  0.72],
+          [Fs4, Q,  0.68],[E4,  DH, 0.65],
+          [0,   Q,  0   ],
         ];
 
-        // 弦楽器風ノート生成
-        const playNote = (freq, dur, vol, startTime) => {
+        const melody = [...phraseA, ...phraseB];
+
+        // 弦楽器ノート（triangle + 薄いsawtooth + ビブラートLFO）
+        const playNote = (freq, durMs, vol, startSec) => {
           if (freq === 0) return;
-          const o = ac.createOscillator();
-          const o2 = ac.createOscillator();
-          const g = ac.createGain();
-          const f = ac.createBiquadFilter();
-          f.type = 'lowpass'; f.frequency.value = 2200;
-          o.type  = 'triangle'; o.frequency.value = freq;
-          o2.type = 'sine';     o2.frequency.value = freq; o2.detune.value = 5;
-          const attack = 0.06, release = Math.min(0.35, dur * 0.001 * 0.4);
-          g.gain.setValueAtTime(0, startTime);
-          g.gain.linearRampToValueAtTime(vol * 0.52, startTime + attack);
-          g.gain.setValueAtTime(vol * 0.52, startTime + dur * 0.001 - release);
-          g.gain.linearRampToValueAtTime(0.0001, startTime + dur * 0.001);
-          o.connect(f); o2.connect(f); f.connect(g);
+          const durSec = durMs / 1000;
+          const atk = 0.08, rel = Math.min(0.4, durSec * 0.35);
+
+          // メイン（triangle）
+          const o1  = ac.createOscillator();
+          // サブ（サイン・微detuned）
+          const o2  = ac.createOscillator();
+          // ビブラートLFO
+          const vib = ac.createOscillator();
+          const vibG = ac.createGain();
+          const g   = ac.createGain();
+          const flt = ac.createBiquadFilter();
+          flt.type = 'lowpass'; flt.frequency.value = 2800; flt.Q.value = 1.2;
+
+          vib.frequency.value = 5.2; vibG.gain.value = freq * 0.012;
+          vib.connect(vibG); vibG.connect(o1.frequency); vibG.connect(o2.frequency);
+
+          o1.type = 'triangle'; o1.frequency.value = freq;
+          o2.type = 'sine';     o2.frequency.value = freq; o2.detune.value = 6;
+
+          g.gain.setValueAtTime(0.0001, startSec);
+          g.gain.linearRampToValueAtTime(vol * 0.50, startSec + atk);
+          g.gain.setValueAtTime(vol * 0.50, startSec + durSec - rel);
+          g.gain.linearRampToValueAtTime(0.0001, startSec + durSec);
+
+          o1.connect(flt); o2.connect(flt); flt.connect(g);
           g.connect(master); g.connect(reverb);
-          o.start(startTime);  o.stop(startTime + dur * 0.001 + 0.05);
-          o2.start(startTime); o2.stop(startTime + dur * 0.001 + 0.05);
-          this._bgmNodes.push(o, o2);
+
+          vib.start(startSec); vib.stop(startSec + durSec + 0.1);
+          o1.start(startSec);  o1.stop(startSec + durSec + 0.05);
+          o2.start(startSec);  o2.stop(startSec + durSec + 0.05);
+          this._bgmNodes.push(o1, o2, vib);
         };
 
         // ハープ風アルペジオ（Eメジャーコード循環）
+        // コード進行: Em → Am → Bm → Em
         const chords = [
-          [E2, B2, E3, Gs3],  // Emaj
-          [A2, E3, A3, Cs4],  // Amaj
-          [B2, Fs3, B3, Ds4], // Bmaj
-          [E2, B2, E3, Gs3],  // Emaj
+          [E2, B2, E3, Gs3, B3],   // Emaj
+          [A2, E3, A3, Cs4, E4 ],  // Amaj
+          [Fs2,Cs3,Fs3,A3,  Cs4],  // F#m
+          [B2, Fs3,B3, D4,  Fs4],  // Bmaj
         ];
 
-        // シーケンサー処理（1ループ = 約16拍）
-        const loopMs = phrase.reduce((s, n) => s + n[1], 0);
-        const scheduleLoop = (loopStart) => {
+        const loopMs = melody.reduce((s, n) => s + n[1], 0);
+
+        const scheduleLoop = (offsetMs) => {
           if (!this._bgmActive) return;
 
-          // メロディスケジュール
-          let t = loopStart;
-          phrase.forEach(([freq, dur]) => {
-            const volIdx = phrase.find(p => p[0] === freq && p[1] === dur);
-            const vol = volIdx ? volIdx[2] : 0.5;
-            if (freq > 0) playNote(freq, dur, vol, ac.currentTime + t / 1000);
-            t += dur;
+          // メロディスケジュール（バグ修正: volを正しく取得）
+          let t = offsetMs;
+          melody.forEach(([freq, durMs, vol]) => {
+            if (freq > 0) playNote(freq, durMs, vol, ac.currentTime + t / 1000);
+            t += durMs;
           });
 
-          // ハープアルペジオ（8分音符刻み）
-          let ht = loopStart;
-          const arpStep = E; // 八分音符
-          let chordIdx = 0;
-          const totalArp = Math.floor(loopMs / (arpStep * 4));
-          for (let c = 0; c < totalArp; c++) {
-            const chord = chords[chordIdx % chords.length];
+          // ハープアルペジオ（各コード2拍×4コード = 8拍/サイクル）
+          const arpNoteDur = E * 0.92;
+          let ht = offsetMs;
+          let ci = 0;
+          while (ht < offsetMs + loopMs) {
+            const chord = chords[ci % chords.length];
             chord.forEach((freq, i) => {
-              const at = ac.currentTime + (ht + arpStep * i) / 1000;
+              const at = ac.currentTime + (ht + E * i) / 1000;
               const o = ac.createOscillator();
               const g = ac.createGain();
+              // ハープ音色: 高めのサイン波
               o.type = 'sine'; o.frequency.value = freq;
+              const peak = 0.07 - i * 0.008;
               g.gain.setValueAtTime(0, at);
-              g.gain.linearRampToValueAtTime(0.09, at + 0.04);
-              g.gain.exponentialRampToValueAtTime(0.0001, at + arpStep * 3 / 1000);
+              g.gain.linearRampToValueAtTime(peak, at + 0.025);
+              g.gain.exponentialRampToValueAtTime(0.0001, at + arpNoteDur / 1000 * 3.5);
               o.connect(g); g.connect(master); g.connect(reverb);
-              o.start(at); o.stop(at + arpStep * 3 / 1000 + 0.05);
+              o.start(at); o.stop(at + arpNoteDur / 1000 * 4);
               this._bgmNodes.push(o);
             });
-            ht += arpStep * 4;
-            chordIdx++;
+            ht += E * chord.length;
+            ci++;
           }
 
-          // 次のループをスケジュール
           this._bgmKickTimer = setTimeout(() => scheduleLoop(0), loopMs);
         };
-        scheduleLoop(200); // 200ms後に開始
+
+        scheduleLoop(300);
 
       } catch(e) {}
     },
