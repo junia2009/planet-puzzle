@@ -708,7 +708,7 @@
 
     /* タイル飛翔クローン */
     .tile-flying {
-      transition: transform 260ms cubic-bezier(0.4, 0, 0.8, 0.6), opacity 260ms ease !important;
+      transition: transform 150ms cubic-bezier(0.4, 0, 0.8, 0.6), opacity 150ms ease !important;
       transform-origin: top left !important;
     }
 
@@ -1020,7 +1020,7 @@ function onTileClick(id) {
   setTimeout(() => {
     clone.remove();
     _afterFlyComplete();
-  }, 320);
+  }, 180);
 }
 
 // ===== マッチチェック =====
