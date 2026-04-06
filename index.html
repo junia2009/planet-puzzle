@@ -735,7 +735,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.9.4</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.9.5</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -1805,7 +1805,7 @@ function spawnSpaceship() {
   if (!document.getElementById('game-screen').classList.contains('visible')) return;
   const goRTL = Math.random() < 0.5;
   const isXW  = Math.random() < 0.5;
-  const svgW  = 30 + Math.round(Math.random() * 30); // 30〜60px
+  const svgW  = 38 + Math.round(Math.random() * 36); // 38〜74px
   const yPct  = 4 + Math.random() * 72;
   const dur   = (7 + Math.random() * 6).toFixed(1);
 
