@@ -735,7 +735,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.9.2</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.9.3</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -1775,25 +1775,29 @@ function _xwingSVG(w) {
 }
 
 function _tieSVG(w) {
-  const h = Math.round(w * 50 / 80);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 80 50">
-    <rect x="0"  y="1" width="20" height="48" fill="#1c2e1c" rx="1"/>
-    <line x1="7"  y1="1"  x2="7"  y2="49" stroke="#2d4e2d" stroke-width="1.2"/>
-    <line x1="14" y1="1"  x2="14" y2="49" stroke="#2d4e2d" stroke-width="1.2"/>
-    <line x1="0"  y1="13" x2="20" y2="13" stroke="#2d4e2d" stroke-width="0.9"/>
-    <line x1="0"  y1="25" x2="20" y2="25" stroke="#2d4e2d" stroke-width="0.9"/>
-    <line x1="0"  y1="37" x2="20" y2="37" stroke="#2d4e2d" stroke-width="0.9"/>
-    <rect x="60" y="1" width="20" height="48" fill="#1c2e1c" rx="1"/>
-    <line x1="67" y1="1"  x2="67" y2="49" stroke="#2d4e2d" stroke-width="1.2"/>
-    <line x1="74" y1="1"  x2="74" y2="49" stroke="#2d4e2d" stroke-width="1.2"/>
-    <line x1="60" y1="13" x2="80" y2="13" stroke="#2d4e2d" stroke-width="0.9"/>
-    <line x1="60" y1="25" x2="80" y2="25" stroke="#2d4e2d" stroke-width="0.9"/>
-    <line x1="60" y1="37" x2="80" y2="37" stroke="#2d4e2d" stroke-width="0.9"/>
-    <rect x="20" y="22" width="9" height="6" fill="#4a4a4a"/>
-    <rect x="51" y="22" width="9" height="6" fill="#4a4a4a"/>
-    <circle cx="40" cy="25" r="11" fill="#111"/>
-    <polygon points="40,17 47,21 47,29 40,33 33,29 33,21" fill="#001800" stroke="#00cc00" stroke-width="1.2"/>
-    <ellipse cx="38" cy="23" rx="3" ry="2" fill="#00ee44" opacity="0.3"/>
+  const h = Math.round(w * 64 / 96);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 96 64">
+    <!-- 左ソーラーパネル（薄いアウトラインのみ） -->
+    <rect x="1" y="2" width="15" height="60" fill="#060e06" stroke="#1e4a1e" stroke-width="1"/>
+    <line x1="6"  y1="2" x2="6"  y2="62" stroke="#1a3a1a" stroke-width="0.7"/>
+    <line x1="11" y1="2" x2="11" y2="62" stroke="#1a3a1a" stroke-width="0.7"/>
+    <line x1="1"  y1="18" x2="16" y2="18" stroke="#1a3a1a" stroke-width="0.7"/>
+    <line x1="1"  y1="32" x2="16" y2="32" stroke="#1a3a1a" stroke-width="0.7"/>
+    <line x1="1"  y1="46" x2="16" y2="46" stroke="#1a3a1a" stroke-width="0.7"/>
+    <!-- 右ソーラーパネル -->
+    <rect x="80" y="2" width="15" height="60" fill="#060e06" stroke="#1e4a1e" stroke-width="1"/>
+    <line x1="85" y1="2" x2="85" y2="62" stroke="#1a3a1a" stroke-width="0.7"/>
+    <line x1="90" y1="2" x2="90" y2="62" stroke="#1a3a1a" stroke-width="0.7"/>
+    <line x1="80" y1="18" x2="95" y2="18" stroke="#1a3a1a" stroke-width="0.7"/>
+    <line x1="80" y1="32" x2="95" y2="32" stroke="#1a3a1a" stroke-width="0.7"/>
+    <line x1="80" y1="46" x2="95" y2="46" stroke="#1a3a1a" stroke-width="0.7"/>
+    <!-- アーム（細い） -->
+    <rect x="16" y="30" width="13" height="4" fill="#3a3a3a" rx="1"/>
+    <rect x="67" y="30" width="13" height="4" fill="#3a3a3a" rx="1"/>
+    <!-- コックピット -->
+    <circle cx="48" cy="32" r="12" fill="#0d0d0d" stroke="#2a2a2a" stroke-width="0.8"/>
+    <polygon points="48,23 55,27.5 55,36.5 48,41 41,36.5 41,27.5" fill="#001500" stroke="#00bb00" stroke-width="1.2"/>
+    <ellipse cx="46" cy="29" rx="2.8" ry="2" fill="#00ff55" opacity="0.25"/>
   </svg>`;
 }
 
