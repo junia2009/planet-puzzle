@@ -728,7 +728,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.7.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.7.1</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -1039,12 +1039,16 @@ const SFX = (() => {
         clearTimeout(this._bgmKickTimer);
         if (this._bgmMaster) {
           const ac = getCtx();
-          this._bgmMaster.gain.setValueAtTime(this._bgmMaster.gain.value, ac.currentTime);
-          this._bgmMaster.gain.linearRampToValueAtTime(0, ac.currentTime + fadeTime);
+          // 現時点のノードとマスターをローカルにキャプチャしてから即クリア。
+          // こうすることで bgmGame() が直後に呼ばれても新ノードを誤ってStopしない。
+          const nodesToStop = this._bgmNodes || [];
+          const masterToFade = this._bgmMaster;
+          this._bgmNodes = [];
+          this._bgmMaster = null;
+          masterToFade.gain.setValueAtTime(masterToFade.gain.value, ac.currentTime);
+          masterToFade.gain.linearRampToValueAtTime(0, ac.currentTime + fadeTime);
           setTimeout(() => {
-            (this._bgmNodes || []).forEach(n => { try { n.stop(); } catch(e) {} });
-            this._bgmNodes = [];
-            this._bgmMaster = null;
+            nodesToStop.forEach(n => { try { n.stop(); } catch(e) {} });
           }, (fadeTime + 0.1) * 1000);
         }
       } catch(e) {}
