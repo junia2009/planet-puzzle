@@ -735,7 +735,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.9.1</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.9.2</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -757,7 +757,7 @@
     <span class="skill-icon">🔀</span><span>シャッフル <span id="shuffle-count">3</span></span>
   </button>
   <button class="skill-btn" id="skill-undo">
-    <span class="skill-icon">↩️</span>元に戻す
+    <span class="skill-icon">↩️</span><span>元に戻す <span id="undo-count">3</span></span>
   </button>
 </div>
 </div>
@@ -1039,6 +1039,7 @@ let tiles = [];         // { id, type, x, y, layer, elem, blocked }
 let slots = [];         // スロットに入ったタイル種類の配列
 let slotTypeOrder = []; // 各タイプの初登場順
 let shuffleRemain = 3;  // シャッフル残り回数
+let undoRemain = 3;     // 元に戻す残り回数
 let history = [];       // アンドゥ用スタック [{tiles, slots}]
 let gameOver = false;
 let isAnimating = false;
@@ -1056,7 +1057,8 @@ function init() {
   document.getElementById('game-area').innerHTML = '';
   shuffleRemain = 3;
   updateShuffleBtn();
-  document.getElementById('skill-undo').disabled = true;
+  undoRemain = 3;
+  updateUndoBtn();
 
   generateTiles();
   totalTiles = tiles.length + 0; // パイルを含む全タイル数を記録（generateTiles後）
@@ -1393,9 +1395,17 @@ document.getElementById('skill-shuffle').addEventListener('click', () => {
 });
 
 document.getElementById('skill-undo').addEventListener('click', () => {
-  if (gameOver || isAnimating || history.length === 0) return;
+  if (gameOver || isAnimating || history.length === 0 || undoRemain <= 0) return;
   restoreHistory();
+  undoRemain--;
+  updateUndoBtn();
 });
+
+function updateUndoBtn() {
+  const btn = document.getElementById('skill-undo');
+  document.getElementById('undo-count').textContent = undoRemain;
+  btn.disabled = undoRemain <= 0;
+}
 
 
 function shuffleTilePositions() {
@@ -1416,7 +1426,8 @@ function saveHistory() {
     slots: [...slots],
     slotTypeOrder: [...slotTypeOrder]
   });
-  document.getElementById('skill-undo').disabled = false;
+  // undoボタンの有効/無効はundoRemainで管理するため更新のみ
+  updateUndoBtn();
 }
 
 function restoreHistory() {
@@ -1450,7 +1461,7 @@ function restoreHistory() {
   renderSlots();
   updateTileCount();
 
-  if (history.length === 0) {
+  if (undoRemain <= 0) {
     document.getElementById('skill-undo').disabled = true;
   }
 }
