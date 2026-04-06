@@ -728,7 +728,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.4.4</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.5.0</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -776,7 +776,81 @@
 </div>
 
 <script>
-// ===== 定数 =====
+// ===== サウンドエンジン（Web Audio API） =====
+const SFX = (() => {
+  let ctx = null;
+  const getCtx = () => {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    return ctx;
+  };
+
+  // 基本ヘルパー：オシレーター＋エンベロープ
+  const osc = (freq, type, start, dur, gainPeak, ac) => {
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(gainPeak, start + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    o.connect(g); g.connect(ac.destination);
+    o.start(start); o.stop(start + dur);
+  };
+
+  return {
+    // 1. タップ音：軽いポップ
+    tap() {
+      try {
+        const ac = getCtx();
+        const t = ac.currentTime;
+        osc(880, 'sine',     t,      0.08, 0.25, ac);
+        osc(1320, 'sine',    t+0.01, 0.06, 0.12, ac);
+      } catch(e) {}
+    },
+
+    // 2. マッチ消去音：明るいコード上昇
+    match() {
+      try {
+        const ac = getCtx();
+        const t = ac.currentTime;
+        [523, 659, 784, 1047].forEach((f, i) => {
+          osc(f, 'sine', t + i * 0.06, 0.35, 0.3, ac);
+        });
+      } catch(e) {}
+    },
+
+    // 3. ゲームオーバー音：不協和音で下降
+    gameover() {
+      try {
+        const ac = getCtx();
+        const t = ac.currentTime;
+        osc(440, 'sawtooth', t,      0.5,  0.3, ac);
+        osc(415, 'sawtooth', t+0.1,  0.5,  0.25, ac);
+        osc(330, 'sawtooth', t+0.3,  0.8,  0.3, ac);
+        osc(220, 'sawtooth', t+0.6,  1.0,  0.25, ac);
+      } catch(e) {}
+    },
+
+    // 4. クリア音：ファンファーレ風アルペジオ
+    clear() {
+      try {
+        const ac = getCtx();
+        const t = ac.currentTime;
+        const melody = [523, 659, 784, 1047, 1319];
+        melody.forEach((f, i) => {
+          osc(f,     'sine',     t + i * 0.1, 0.6, 0.3, ac);
+          osc(f * 2, 'sine',     t + i * 0.1, 0.4, 0.1, ac);
+        });
+        // 最後に和音
+        [523, 659, 784].forEach(f => {
+          osc(f, 'sine', t + 0.6, 0.8, 0.25, ac);
+        });
+      } catch(e) {}
+    }
+  };
+})();
+
+
 // 惑星・天体テーマ（太陽系8惑星＋太陽＋月）
 const TILE_TYPES = ['☀️','🌕','🌍','🪐','🔴','🔵','🟠','🟡','⚫','🟣','⭐','☄️','🌙','🛸','💫'];
 const TILE_COUNT_EACH = 27;  // 各タイル種類の枚数（3の倍数）→ 合計405枚
@@ -952,6 +1026,9 @@ function onTileClick(id) {
   const totalSlots = BASE_SLOTS + extraSlots;
   if (slots.length >= totalSlots) return;
 
+  // タップ音
+  SFX.tap();
+
   // アンドゥ用スナップショット
   saveHistory();
 
@@ -1061,6 +1138,7 @@ function _afterFlyComplete() {
   }
 
   // マッチあり：スロットを描画してから消去アニメーション
+  SFX.match();
   renderSlots();
   const slotAreaElem = document.getElementById('slot-area');
   const allSlotDivs = slotAreaElem.querySelectorAll('.slot');
@@ -1114,12 +1192,14 @@ function updateTileCount() {
 // ===== ゲーム状態チェック =====
 function checkGameState() {
   if (tiles.length === 0) {
+    SFX.clear();
     showClearOverlay();
     gameOver = true;
     return;
   }
   const totalSlots = BASE_SLOTS + extraSlots;
   if (slots.length >= totalSlots) {
+    SFX.gameover();
     const removed = totalTiles - tiles.length - slots.length;
     const pct = Math.floor(removed / totalTiles * 100);
     showOverlay('💀 ゲームオーバー', `${pct}% クリア！
