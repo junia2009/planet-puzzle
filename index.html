@@ -191,6 +191,113 @@
       transform: translateY(-2px);
     }
 
+    /* 遊び方ボタン */
+    #how-to-btn {
+      margin-top: 14px;
+      padding: 10px 36px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.4);
+      background: transparent;
+      border: 1px solid rgba(167,139,250,0.25);
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #how-to-btn:hover, #how-to-btn:active {
+      color: rgba(255,255,255,0.9);
+      border-color: rgba(167,139,250,0.7);
+      box-shadow: 0 0 16px rgba(167,139,250,0.3);
+    }
+
+    /* 遊び方モーダル */
+    #howto-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 6000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.78);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      padding: 20px;
+    }
+    #howto-modal.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #howto-box {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      max-height: 82vh;
+      overflow-y: auto;
+      background: rgba(8,8,24,0.96);
+      border: 1px solid rgba(167,139,250,0.35);
+      border-radius: 20px;
+      padding: 32px 24px 28px;
+      color: rgba(255,255,255,0.82);
+      font-size: 0.88rem;
+      line-height: 1.75;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 0 48px rgba(167,139,250,0.18);
+    }
+    #howto-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.38);
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+    #howto-close:hover { color: #fff; }
+    #howto-box h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.05rem;
+      letter-spacing: 4px;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0 0 20px;
+      text-align: center;
+    }
+    #howto-box h3 {
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+      color: rgba(167,139,250,0.75);
+      text-transform: uppercase;
+      margin: 20px 0 10px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid rgba(167,139,250,0.15);
+    }
+    #howto-box h3:first-of-type { margin-top: 4px; }
+    .howto-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 6px 0;
+    }
+    .howto-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+      width: 22px;
+      text-align: center;
+      padding-top: 2px;
+    }
+
     /* 流れ星 */
     .shooting-star {
       position: fixed;
@@ -724,8 +831,30 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.12.3</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.13.0</div>
   <button id="start-btn">GAME START</button>
+  <button id="how-to-btn">遊び方</button>
+</div>
+
+<div id="howto-modal">
+  <div id="howto-box">
+    <button id="howto-close">✕</button>
+    <h2>HOW TO PLAY</h2>
+
+    <h3>基本ルール</h3>
+    <div class="howto-row"><span class="howto-icon">👆</span><span>タイルをタップするとスロット（下段）に送られます。</span></div>
+    <div class="howto-row"><span class="howto-icon">✨</span><span>スロットに同じ種類が <strong>3枚</strong> 揃うと自動で消去されます。</span></div>
+    <div class="howto-row"><span class="howto-icon">🏆</span><span>すべてのタイル（405枚）を消せば <strong>MISSION COMPLETE！</strong></span></div>
+    <div class="howto-row"><span class="howto-icon">💀</span><span>スロットが <strong>満杯（7枠）</strong> になるとゲームオーバーです。</span></div>
+
+    <h3>タイルの重なり</h3>
+    <div class="howto-row"><span class="howto-icon">🔒</span><span>暗くなっているタイルは上に別のタイルが重なっており、タップできません。</span></div>
+    <div class="howto-row"><span class="howto-icon">💡</span><span>上のタイルを先に取り除くと、下のタイルが解放されます。</span></div>
+
+    <h3>スキル（各3回まで）</h3>
+    <div class="howto-row"><span class="howto-icon">🔀</span><span><strong>シャッフル：</strong> ゲームエリア内タイルの種類をランダムに入れ替えます。配置位置はそのままです。</span></div>
+    <div class="howto-row"><span class="howto-icon">↩️</span><span><strong>元に戻す：</strong> 直前にタップしたタイルをゲームエリアに戻します。</span></div>
+  </div>
 </div>
 
 <div id="game-screen">
@@ -1841,6 +1970,21 @@ resizeGame();
 document.getElementById('title-screen').addEventListener('pointerdown', () => {
   SFX.bgmStart();
 }, { once: true });
+
+// 遊び方モーダル
+(function() {
+  const modal = document.getElementById('howto-modal');
+  document.getElementById('how-to-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    modal.classList.add('visible');
+  });
+  document.getElementById('howto-close').addEventListener('click', () => {
+    modal.classList.remove('visible');
+  });
+  modal.addEventListener('click', e => {
+    if (e.target === modal) modal.classList.remove('visible');
+  });
+})();
 
 document.getElementById('start-btn').addEventListener('click', () => {
   const titleScreen = document.getElementById('title-screen');
