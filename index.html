@@ -211,21 +211,10 @@
     .ship-wrap {
       position: fixed;
       left: 0;
+      top: 0;
       pointer-events: none;
       filter: drop-shadow(0 0 5px rgba(140,210,255,0.45));
-    }
-    .ship-flip { display: inline-block; transform: scaleX(-1); }
-    @keyframes ship-ltr {
-      from { transform: translateX(-90px); opacity: 0; }
-      7%   { opacity: 0.68; }
-      93%  { opacity: 0.68; }
-      to   { transform: translateX(calc(100vw + 90px)); opacity: 0; }
-    }
-    @keyframes ship-rtl {
-      from { transform: translateX(calc(100vw + 90px)); opacity: 0; }
-      7%   { opacity: 0.68; }
-      93%  { opacity: 0.68; }
-      to   { transform: translateX(-90px); opacity: 0; }
+      transform-origin: 50% 50%;
     }
 
     /* ゲーム画面 */
@@ -735,7 +724,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.9.5</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.9.6</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -1803,29 +1792,43 @@ function _tieSVG(w) {
 
 function spawnSpaceship() {
   if (!document.getElementById('game-screen').classList.contains('visible')) return;
-  const goRTL = Math.random() < 0.5;
+
   const isXW  = Math.random() < 0.5;
-  const svgW  = 38 + Math.round(Math.random() * 36); // 38〜74px
-  const yPct  = 4 + Math.random() * 72;
-  const dur   = (7 + Math.random() * 6).toFixed(1);
+  const goRTL = Math.random() < 0.5;
+  // 飛行角度: -30〜+30度の範囲でランダム
+  const ang   = Math.round(Math.random() * 60 - 30);
+  // XWは大きめ、TIEは小さめ
+  const svgW  = isXW ? (58 + Math.round(Math.random() * 32)) : (36 + Math.round(Math.random() * 28));
+  const svgH  = isXW ? Math.round(svgW * 38 / 95) : Math.round(svgW * 64 / 96);
+
+  const vw   = window.innerWidth;
+  const vh   = window.innerHeight;
+  const dist = Math.sqrt(vw * vw + vh * vh) + 160;
+  const rad  = ang * Math.PI / 180;
+  const mx   = goRTL ? -dist : dist;
+  const my   = dist * Math.sin(rad);
+
+  // 開始位置: 画面外側の左右どちらか
+  const sx = goRTL ? vw + svgW : -svgW;
+  const sy = vh * (0.04 + Math.random() * 0.68);
+
+  // 回転角度: LTR=ang, RTL=180+ang（鼻が辺りの方向を向く）
+  const rot = goRTL ? 180 + ang : ang;
+  const dur = 7000 + Math.random() * 6000;
 
   const wrap = document.createElement('div');
   wrap.className = 'ship-wrap';
-  wrap.style.top  = yPct + 'vh';
-  wrap.style.animation = `ship-${goRTL ? 'rtl' : 'ltr'} ${dur}s linear forwards`;
-
-  if (goRTL) {
-    const flip = document.createElement('div');
-    flip.className = 'ship-flip';
-    flip.innerHTML = isXW ? _xwingSVG(svgW) : _tieSVG(svgW);
-    wrap.appendChild(flip);
-  } else {
-    wrap.innerHTML = isXW ? _xwingSVG(svgW) : _tieSVG(svgW);
-  }
-
-  // bodyの先頭に挿入→ゲーム画面の背後に描画される
+  wrap.innerHTML = isXW ? _xwingSVG(svgW) : _tieSVG(svgW);
   document.body.insertBefore(wrap, document.body.firstChild);
-  wrap.addEventListener('animationend', () => wrap.remove());
+
+  const kf = [
+    { transform: `translate(${sx}px,${sy}px) rotate(${rot}deg)`,                         opacity: '0',    offset: 0    },
+    { transform: `translate(${sx + mx*0.07}px,${sy + my*0.07}px) rotate(${rot}deg)`,     opacity: '0.65', offset: 0.07 },
+    { transform: `translate(${sx + mx*0.93}px,${sy + my*0.93}px) rotate(${rot}deg)`,     opacity: '0.65', offset: 0.93 },
+    { transform: `translate(${sx + mx}px,${sy + my}px) rotate(${rot}deg)`,               opacity: '0',    offset: 1    }
+  ];
+  const anim = wrap.animate(kf, { duration: dur, easing: 'linear', fill: 'forwards' });
+  anim.addEventListener('finish', () => wrap.remove());
 }
 setInterval(spawnSpaceship, 4500);
 </script>
