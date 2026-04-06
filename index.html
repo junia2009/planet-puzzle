@@ -724,7 +724,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.11.1</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.11.2</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -1967,17 +1967,16 @@ function spawnSpaceship() {
 
   let kf;
   if (isHyper) {
-    // 35%地点でスピードライン発生
+    // 36%地点でスピードライン発生 → 機体がその瞬間に消える
     const hx = sx + mx * 0.36;
     const hy = sy + my * 0.36;
     setTimeout(() => spawnHyperLines(hx, hy, rot, goRTL), dur * 0.36);
     kf = [
-      { transform: `translate(${sx}px,${sy}px) rotate(${rot}deg)`,                                           opacity: '0',   offset: 0    },
-      { transform: `translate(${sx + mx*0.07}px,${sy + my*0.07}px) rotate(${rot}deg)`,                       opacity: '0.7', offset: 0.07 },
-      { transform: `translate(${sx + mx*0.36}px,${sy + my*0.36}px) rotate(${rot}deg)`,                       opacity: '0.9', offset: 0.36 },
-      { transform: `translate(${sx + mx*0.40}px,${sy + my*0.40}px) rotate(${rot}deg) scaleX(3.5)`,           opacity: '0.9', offset: 0.39 },
-      { transform: `translate(${sx + mx}px,${sy + my}px) rotate(${rot}deg) scaleX(3.5)`,                     opacity: '0',   offset: 0.50 },
-      { transform: `translate(${sx + mx}px,${sy + my}px) rotate(${rot}deg)`,                                 opacity: '0',   offset: 1    },
+      { transform: `translate(${sx}px,${sy}px) rotate(${rot}deg)`,                         opacity: '0',   offset: 0    },
+      { transform: `translate(${sx + mx*0.07}px,${sy + my*0.07}px) rotate(${rot}deg)`,     opacity: '0.7', offset: 0.07 },
+      { transform: `translate(${sx + mx*0.36}px,${sy + my*0.36}px) rotate(${rot}deg)`,     opacity: '0.9', offset: 0.355},
+      { transform: `translate(${sx + mx*0.36}px,${sy + my*0.36}px) rotate(${rot}deg)`,     opacity: '0',   offset: 0.38 }, // スピードライン出現と同時に消える
+      { transform: `translate(${sx + mx}px,${sy + my}px) rotate(${rot}deg)`,               opacity: '0',   offset: 1    },
     ];
   } else {
     kf = [
