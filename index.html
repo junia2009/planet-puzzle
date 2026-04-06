@@ -724,7 +724,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.11.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.11.1</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -1876,6 +1876,48 @@ function _falconSVG(w) {
   </svg>`;
 }
 
+function spawnHyperLines(cx, cy, rot, goRTL) {
+  const lines = [
+    { dy: -24, w: 190, h: 1.4, alpha: 0.55 },
+    { dy: -12, w: 240, h: 2.2, alpha: 0.80 },
+    { dy:   0, w: 280, h: 3.5, alpha: 1.00 },
+    { dy:  12, w: 240, h: 2.2, alpha: 0.80 },
+    { dy:  24, w: 190, h: 1.4, alpha: 0.55 },
+    { dy: -40, w: 110, h: 0.8, alpha: 0.35 },
+    { dy: -33, w: 145, h: 1.0, alpha: 0.45 },
+    { dy:  33, w: 145, h: 1.0, alpha: 0.45 },
+    { dy:  40, w: 110, h: 0.8, alpha: 0.35 },
+  ];
+  const radR = rot * Math.PI / 180;
+  const gradDir = goRTL ? '90deg' : '270deg';
+  lines.forEach(({ dy, w, h, alpha }) => {
+    const offX = -dy * Math.sin(radR);
+    const offY =  dy * Math.cos(radR);
+    const el = document.createElement('div');
+    el.style.cssText = [
+      'position:fixed',
+      `left:${cx + offX - (goRTL ? 0 : w)}px`,
+      `top:${cy + offY - h / 2}px`,
+      `width:${w}px`,
+      `height:${h}px`,
+      `background:linear-gradient(${gradDir},transparent,rgba(160,215,255,${alpha}),rgba(255,255,255,${alpha}))`,
+      `transform:rotate(${rot}deg)`,
+      `transform-origin:${goRTL ? '0% 50%' : '100% 50%'}`,
+      'pointer-events:none',
+      'filter:blur(0.7px)',
+      'z-index:9999',
+    ].join(';');
+    document.body.appendChild(el);
+    const a = el.animate([
+      { opacity: 0,   transform: `rotate(${rot}deg) scaleX(0.05)` },
+      { opacity: 1,   transform: `rotate(${rot}deg) scaleX(1)`,   offset: 0.18 },
+      { opacity: 0.9, transform: `rotate(${rot}deg) scaleX(1)`,   offset: 0.55 },
+      { opacity: 0,   transform: `rotate(${rot}deg) scaleX(1.2)` },
+    ], { duration: 900, easing: 'ease-out', fill: 'forwards' });
+    a.onfinish = () => el.remove();
+  });
+}
+
 function spawnSpaceship() {
   const _gs = document.getElementById('game-screen');
   const _ts = document.getElementById('title-screen');
@@ -1897,7 +1939,7 @@ function spawnSpaceship() {
     ang  = sign * Math.round(Math.random() * 18);          // ±0〜±18（ほぼ水平）
     svgW = 90 + Math.round(Math.random() * 30);            // 90〜120px
     svgH = Math.round(svgW * 160 / 206);
-    dur  = 6000 + Math.random() * 4000;
+    dur  = 7000 + Math.random() * 3000;
   } else {
     ang  = Math.round(Math.random() * 60 - 30);            // -30〜+30
     svgW = 36 + Math.round(Math.random() * 28);            // 36〜64px
@@ -1921,12 +1963,30 @@ function spawnSpaceship() {
   wrap.innerHTML = isXW ? _xwingSVG(svgW) : (isFAL ? _falconSVG(svgW) : _tieSVG(svgW));
   document.body.insertBefore(wrap, document.body.firstChild);
 
-  const kf = [
-    { transform: `translate(${sx}px,${sy}px) rotate(${rot}deg)`,                         opacity: '0',    offset: 0    },
-    { transform: `translate(${sx + mx*0.07}px,${sy + my*0.07}px) rotate(${rot}deg)`,     opacity: '0.65', offset: 0.07 },
-    { transform: `translate(${sx + mx*0.93}px,${sy + my*0.93}px) rotate(${rot}deg)`,     opacity: '0.65', offset: 0.93 },
-    { transform: `translate(${sx + mx}px,${sy + my}px) rotate(${rot}deg)`,               opacity: '0',    offset: 1    }
-  ];
+  const isHyper = isFAL && Math.random() < 0.18; // 18%の確率でハイパードライブ演出
+
+  let kf;
+  if (isHyper) {
+    // 35%地点でスピードライン発生
+    const hx = sx + mx * 0.36;
+    const hy = sy + my * 0.36;
+    setTimeout(() => spawnHyperLines(hx, hy, rot, goRTL), dur * 0.36);
+    kf = [
+      { transform: `translate(${sx}px,${sy}px) rotate(${rot}deg)`,                                           opacity: '0',   offset: 0    },
+      { transform: `translate(${sx + mx*0.07}px,${sy + my*0.07}px) rotate(${rot}deg)`,                       opacity: '0.7', offset: 0.07 },
+      { transform: `translate(${sx + mx*0.36}px,${sy + my*0.36}px) rotate(${rot}deg)`,                       opacity: '0.9', offset: 0.36 },
+      { transform: `translate(${sx + mx*0.40}px,${sy + my*0.40}px) rotate(${rot}deg) scaleX(3.5)`,           opacity: '0.9', offset: 0.39 },
+      { transform: `translate(${sx + mx}px,${sy + my}px) rotate(${rot}deg) scaleX(3.5)`,                     opacity: '0',   offset: 0.50 },
+      { transform: `translate(${sx + mx}px,${sy + my}px) rotate(${rot}deg)`,                                 opacity: '0',   offset: 1    },
+    ];
+  } else {
+    kf = [
+      { transform: `translate(${sx}px,${sy}px) rotate(${rot}deg)`,                         opacity: '0',    offset: 0    },
+      { transform: `translate(${sx + mx*0.07}px,${sy + my*0.07}px) rotate(${rot}deg)`,     opacity: '0.65', offset: 0.07 },
+      { transform: `translate(${sx + mx*0.93}px,${sy + my*0.93}px) rotate(${rot}deg)`,     opacity: '0.65', offset: 0.93 },
+      { transform: `translate(${sx + mx}px,${sy + my}px) rotate(${rot}deg)`,               opacity: '0',    offset: 1    },
+    ];
+  }
   const anim = wrap.animate(kf, { duration: dur, easing: 'linear', fill: 'forwards' });
   anim.addEventListener('finish', () => wrap.remove());
 }
