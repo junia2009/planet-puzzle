@@ -728,7 +728,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.6.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.6.1</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -1645,8 +1645,8 @@ if ('serviceWorker' in navigator) {
 resizeGame();
 
 // タイトル画面制御
-// pointerdown でBGM起動（ブラウザのautoplay制限を回避：初回ユーザー操作で AudioContext を解放）
-document.getElementById('start-btn').addEventListener('pointerdown', () => {
+// タイトル画面のどこかをタップしたら BGM 起動（ブラウザのautoplay制限を回避）
+document.getElementById('title-screen').addEventListener('pointerdown', () => {
   SFX.bgmStart();
 }, { once: true });
 
