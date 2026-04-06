@@ -706,15 +706,6 @@
       100% { transform: scale(0.5) rotate(360deg) translateY(-60px); opacity: 0; }
     }
 
-    /* タイル飛翔クローン */
-    .tile-flying {
-      transition: transform 150ms cubic-bezier(0.4, 0, 0.8, 0.6), opacity 150ms ease !important;
-      transform-origin: top left !important;
-      will-change: transform, opacity;
-      -webkit-backface-visibility: hidden;
-      backface-visibility: hidden;
-    }
-
     /* スロット消去アニメーション */
     @keyframes match-exit {
       0%   { transform: scale(1); opacity: 1; }
@@ -737,7 +728,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.4.2</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.4.3</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -991,7 +982,6 @@ function onTileClick(id) {
 
   // 飛翔クローンを生成
   const clone = tile.elem.cloneNode(true);
-  clone.classList.add('tile-flying');
   clone.style.position = 'fixed';
   clone.style.left = tileScreenX + 'px';
   clone.style.top = tileScreenY + 'px';
@@ -1002,11 +992,7 @@ function onTileClick(id) {
   clone.style.zIndex = '99999';
   clone.style.pointerEvents = 'none';
   clone.style.transformOrigin = 'top left';
-  clone.style.transform = 'translate(0,0) scale(1)'; // iOS用: 初期変形を明示
   document.body.appendChild(clone);
-
-  // 強制リフロー（iOS Safariで初期スタイルをブラウザにコミットさせる）
-  clone.getBoundingClientRect();
 
   // タイルをゲームエリアから除去
   tile.elem.remove();
@@ -1017,15 +1003,20 @@ function onTileClick(id) {
   slots = tempSlots;
   isAnimating = true;
 
-  requestAnimationFrame(() => {
-    clone.style.transform = `translate(${dx}px, ${dy}px) scale(${targetScale})`;
-    clone.style.opacity = '0.7';
+  // Web Animations API（iOS SafariでもCSS transitionより確実に動作）
+  const anim = clone.animate([
+    { transform: 'translate(0, 0) scale(1)',                                     opacity: '1'   },
+    { transform: `translate(${dx}px, ${dy}px) scale(${targetScale})`,           opacity: '0.7' }
+  ], {
+    duration: 180,
+    easing: 'cubic-bezier(0.4, 0, 0.8, 0.6)',
+    fill: 'forwards'
   });
 
-  setTimeout(() => {
+  anim.onfinish = () => {
     clone.remove();
     _afterFlyComplete();
-  }, 180);
+  };
 }
 
 // ===== マッチチェック =====
