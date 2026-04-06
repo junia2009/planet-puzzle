@@ -724,7 +724,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.10.7</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.10.8</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -1844,12 +1844,12 @@ function _falconSVG(w) {
     <circle cx="126" cy="44" r="13" fill="#606058"/>
     <circle cx="126" cy="44" r="8"  fill="#686860"/>
     <circle cx="126" cy="44" r="3.5" fill="#787870"/>
-    <!-- マンディブル上アーム（直角三角形・内側直角） -->
-    <polygon points="168,52 168,68 202,68" fill="#929288" stroke="#646460" stroke-width="1.3" stroke-linejoin="round"/>
-    <!-- マンディブル下アーム（直角三角形・内側直角・線対称） -->
-    <polygon points="168,92 168,76 202,76" fill="#929288" stroke="#646460" stroke-width="1.3" stroke-linejoin="round"/>
-    <!-- マンディブル間ギャップ（影） -->
-    <rect x="161" y="68" width="14" height="8" rx="1.5" fill="#141412" opacity="0.92"/>
+    <!-- マンディブル上アーム（台形・外辺が斜め・付け根12px先端7px） -->
+    <polygon points="170,60 204,65 204,72 170,72" fill="#929288" stroke="#646460" stroke-width="1.3" stroke-linejoin="round"/>
+    <!-- マンディブル下アーム（台形・線対称） -->
+    <polygon points="170,92 204,92 204,99 170,104" fill="#929288" stroke="#646460" stroke-width="1.3" stroke-linejoin="round"/>
+    <!-- マンディブル間ギャップ（影・広め） -->
+    <rect x="168" y="72" width="11" height="20" rx="1" fill="#141412" opacity="0.88"/>
     <!-- コックピットアーム（上部前方） -->
     <rect x="74" y="14" width="28" height="12" rx="3" fill="#848478" stroke="#585850" stroke-width="1.1"/>
     <!-- コックピットポッド -->
