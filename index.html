@@ -710,6 +710,9 @@
     .tile-flying {
       transition: transform 150ms cubic-bezier(0.4, 0, 0.8, 0.6), opacity 150ms ease !important;
       transform-origin: top left !important;
+      will-change: transform, opacity;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
     }
 
     /* スロット消去アニメーション */
@@ -734,7 +737,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.4.1</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.4.2</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -999,7 +1002,11 @@ function onTileClick(id) {
   clone.style.zIndex = '99999';
   clone.style.pointerEvents = 'none';
   clone.style.transformOrigin = 'top left';
+  clone.style.transform = 'translate(0,0) scale(1)'; // iOS用: 初期変形を明示
   document.body.appendChild(clone);
+
+  // 強制リフロー（iOS Safariで初期スタイルをブラウザにコミットさせる）
+  clone.getBoundingClientRect();
 
   // タイルをゲームエリアから除去
   tile.elem.remove();
@@ -1011,10 +1018,8 @@ function onTileClick(id) {
   isAnimating = true;
 
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      clone.style.transform = `translate(${dx}px, ${dy}px) scale(${targetScale})`;
-      clone.style.opacity = '0.7';
-    });
+    clone.style.transform = `translate(${dx}px, ${dy}px) scale(${targetScale})`;
+    clone.style.opacity = '0.7';
   });
 
   setTimeout(() => {
