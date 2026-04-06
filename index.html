@@ -705,6 +705,23 @@
       60%  { transform: scale(1.4) rotate(180deg); opacity: 1; }
       100% { transform: scale(0.5) rotate(360deg) translateY(-60px); opacity: 0; }
     }
+
+    /* タイル飛翔クローン */
+    .tile-flying {
+      transition: transform 260ms cubic-bezier(0.4, 0, 0.8, 0.6), opacity 260ms ease !important;
+      transform-origin: top left !important;
+    }
+
+    /* スロット消去アニメーション */
+    @keyframes match-exit {
+      0%   { transform: scale(1); opacity: 1; }
+      35%  { transform: scale(1.35); opacity: 1; filter: brightness(2.5) saturate(1.5); }
+      100% { transform: scale(0); opacity: 0; }
+    }
+    .slot.match-exit {
+      animation: match-exit 360ms ease-in forwards;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -786,6 +803,7 @@ let slotTypeOrder = []; // 各タイプの初登場順
 let extraSlots = 0;     // スロット拡張数
 let history = [];       // アンドゥ用スタック [{tiles, slots}]
 let gameOver = false;
+let isAnimating = false;
 let totalTiles = 0;     // ゲーム開始時の総タイル数
 
 // ===== 初期化 =====
@@ -796,6 +814,7 @@ function init() {
   extraSlots = 0;
   history = [];
   gameOver = false;
+  isAnimating = false;
 
   document.getElementById('game-area').innerHTML = '';
   document.getElementById('skill-shuffle').disabled = false;
@@ -932,7 +951,7 @@ function rectsOverlap(a, b) {
 
 // ===== タイルクリック =====
 function onTileClick(id) {
-  if (gameOver) return;
+  if (gameOver || isAnimating) return;
   const tile = tiles.find(t => t.id === id);
   if (!tile || tile.blocked) return;
 
@@ -942,23 +961,66 @@ function onTileClick(id) {
   // アンドゥ用スナップショット
   saveHistory();
 
-  // スロットに追加して初登場順でグループソート
-  if (!slotTypeOrder.includes(tile.type)) slotTypeOrder.push(tile.type);
-  slots.push(tile.type);
-  slots.sort((a, b) => slotTypeOrder.indexOf(a) - slotTypeOrder.indexOf(b));
+  // 飛翔先スロットインデックスを計算（ソート後の最終位置）
+  const newType = tile.type;
+  if (!slotTypeOrder.includes(newType)) slotTypeOrder.push(newType);
+  const tempSlots = [...slots, newType];
+  tempSlots.sort((a, b) => slotTypeOrder.indexOf(a) - slotTypeOrder.indexOf(b));
+  const targetSlotIndex = tempSlots.lastIndexOf(newType);
+
+  // タイルとスロットのscreen座標を計算
+  const gameArea = document.getElementById('game-area');
+  const gameRect = gameArea.getBoundingClientRect();
+  const availW = Math.min(560, window.innerWidth - 32);
+  const scale = availW / 560;
+  const tileScreenX = gameRect.left + tile.x * scale;
+  const tileScreenY = gameRect.top + tile.y * scale;
+  const tileScreenSize = TILE_SIZE * scale;
+
+  const slotAreaElem = document.getElementById('slot-area');
+  const slotRect = slotAreaElem.getBoundingClientRect();
+  const slotSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--slot-size'), 10) || 58;
+  const targetX = slotRect.left + 16 + targetSlotIndex * (slotSize + 6);
+  const targetY = slotRect.top + (slotRect.height - slotSize) / 2;
+  const dx = targetX - tileScreenX;
+  const dy = targetY - tileScreenY;
+  const targetScale = slotSize / tileScreenSize;
+
+  // 飛翔クローンを生成
+  const clone = tile.elem.cloneNode(true);
+  clone.classList.add('tile-flying');
+  clone.style.position = 'fixed';
+  clone.style.left = tileScreenX + 'px';
+  clone.style.top = tileScreenY + 'px';
+  clone.style.width = tileScreenSize + 'px';
+  clone.style.height = tileScreenSize + 'px';
+  clone.style.fontSize = (tileScreenSize * 0.731) + 'px';
+  clone.style.borderRadius = Math.round(14 * scale) + 'px';
+  clone.style.zIndex = '99999';
+  clone.style.pointerEvents = 'none';
+  clone.style.transformOrigin = 'top left';
+  document.body.appendChild(clone);
 
   // タイルをゲームエリアから除去
   tile.elem.remove();
   tiles = tiles.filter(t => t.id !== id);
-
   updateBlockedState();
 
-  // 同じ種類が3つ揃ったか確認
-  checkMatch();
+  // slots を更新してアニメーション開始
+  slots = tempSlots;
+  isAnimating = true;
 
-  renderSlots();
-  updateTileCount();
-  checkGameState();
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      clone.style.transform = `translate(${dx}px, ${dy}px) scale(${targetScale})`;
+      clone.style.opacity = '0.7';
+    });
+  });
+
+  setTimeout(() => {
+    clone.remove();
+    _afterFlyComplete();
+  }, 320);
 }
 
 // ===== マッチチェック =====
@@ -974,6 +1036,43 @@ function checkMatch() {
       });
     }
   });
+}
+
+// ===== タイル飛翔後処理 =====
+function _afterFlyComplete() {
+  // マッチしたタイプを検出
+  let matchedType = -1;
+  TILE_TYPES.forEach((_, type) => {
+    if (slots.filter(s => s === type).length >= 3) matchedType = type;
+  });
+
+  if (matchedType === -1) {
+    renderSlots();
+    updateTileCount();
+    checkGameState();
+    isAnimating = false;
+    return;
+  }
+
+  // マッチあり：スロットを描画してから消去アニメーション
+  renderSlots();
+  const slotAreaElem = document.getElementById('slot-area');
+  const allSlotDivs = slotAreaElem.querySelectorAll('.slot');
+  let matchCount = 0;
+  slots.forEach((s, i) => {
+    if (s === matchedType && matchCount < 3) {
+      allSlotDivs[i].classList.add('match-exit');
+      matchCount++;
+    }
+  });
+
+  setTimeout(() => {
+    checkMatch();
+    renderSlots();
+    updateTileCount();
+    checkGameState();
+    isAnimating = false;
+  }, 400);
 }
 
 // ===== スロット描画 =====
@@ -1025,19 +1124,19 @@ function checkGameState() {
 
 // ===== スキル =====
 document.getElementById('skill-shuffle').addEventListener('click', () => {
-  if (gameOver) return;
+  if (gameOver || isAnimating) return;
   saveHistory();
   shuffleTilePositions();
   updateBlockedState();
 });
 
 document.getElementById('skill-undo').addEventListener('click', () => {
-  if (gameOver || history.length === 0) return;
+  if (gameOver || isAnimating || history.length === 0) return;
   restoreHistory();
 });
 
 document.getElementById('skill-expand').addEventListener('click', () => {
-  if (gameOver) return;
+  if (gameOver || isAnimating) return;
   extraSlots += SLOT_EXPAND;
   document.getElementById('skill-expand').disabled = true;
   resizeGame();
