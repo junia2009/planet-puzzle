@@ -430,6 +430,59 @@
       filter: brightness(0.45) saturate(0.5);
     }
 
+    /* ===== イースターエッグ：虹色タイル ===== */
+    @keyframes rainbow-glow {
+      0%   { background: linear-gradient(145deg,#ff6b6b,#ffd93d); border-color: rgba(255,100,100,0.7); box-shadow: 0 0 18px rgba(255,80,80,0.6); }
+      14%  { background: linear-gradient(145deg,#ffd93d,#6bcb77); border-color: rgba(255,210,50,0.7); box-shadow: 0 0 18px rgba(255,200,0,0.6); }
+      28%  { background: linear-gradient(145deg,#6bcb77,#4d96ff); border-color: rgba(100,200,100,0.7); box-shadow: 0 0 18px rgba(80,200,80,0.6); }
+      42%  { background: linear-gradient(145deg,#4d96ff,#c77dff); border-color: rgba(80,150,255,0.7); box-shadow: 0 0 18px rgba(80,150,255,0.6); }
+      57%  { background: linear-gradient(145deg,#c77dff,#ff6eb4); border-color: rgba(180,100,255,0.7); box-shadow: 0 0 18px rgba(180,80,255,0.6); }
+      71%  { background: linear-gradient(145deg,#ff6eb4,#ff9a3c); border-color: rgba(255,100,180,0.7); box-shadow: 0 0 18px rgba(255,100,180,0.6); }
+      85%  { background: linear-gradient(145deg,#ff9a3c,#ff6b6b); border-color: rgba(255,150,50,0.7); box-shadow: 0 0 18px rgba(255,150,50,0.6); }
+      100% { background: linear-gradient(145deg,#ff6b6b,#ffd93d); border-color: rgba(255,100,100,0.7); box-shadow: 0 0 18px rgba(255,80,80,0.6); }
+    }
+    .tile.rainbow {
+      animation: rainbow-glow 1.4s linear infinite !important;
+    }
+    .tile.blocked.rainbow {
+      filter: brightness(0.45) saturate(0.5);
+      animation: none !important;
+    }
+
+    /* ===== イースターエッグ：Forceメッセージ ===== */
+    #force-msg {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+    }
+    #force-msg.show {
+      animation: force-flash 3.2s ease forwards;
+    }
+    @keyframes force-flash {
+      0%   { opacity: 0; }
+      12%  { opacity: 1; }
+      70%  { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    #force-msg span {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.1rem, 5vw, 2rem);
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-align: center;
+      background: linear-gradient(135deg, #ffe066, #fff7c0, #ffd700);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 18px rgba(255,220,50,0.9)) drop-shadow(0 0 40px rgba(255,180,0,0.5));
+      padding: 0 24px;
+    }
+
     /* ===== 惑星タイル個別スタイル ===== */
     /* 0:☀️太陽 - 燃えるオレンジ〜黄 */
     .tile-0 {
@@ -831,10 +884,12 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.13.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.13.1</div>
   <button id="start-btn">GAME START</button>
   <button id="how-to-btn">遊び方</button>
 </div>
+
+<div id="force-msg"><span>May the Force be with you ✨</span></div>
 
 <div id="howto-modal">
   <div id="howto-box">
@@ -1970,6 +2025,42 @@ resizeGame();
 document.getElementById('title-screen').addEventListener('pointerdown', () => {
   SFX.bgmStart();
 }, { once: true });
+
+// ===== イースターエッグ：惑星7回タップ =====
+(function() {
+  let tapCount = 0;
+  let tapTimer = null;
+  let rainbowTimer = null;
+  const REQUIRED = 7;
+
+  document.querySelector('.planet-main').addEventListener('click', () => {
+    tapCount++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { tapCount = 0; }, 1200);
+
+    if (tapCount >= REQUIRED) {
+      tapCount = 0;
+      clearTimeout(tapTimer);
+      triggerForce();
+    }
+  });
+
+  function triggerForce() {
+    // メッセージフラッシュ
+    const msg = document.getElementById('force-msg');
+    msg.classList.remove('show');
+    void msg.offsetWidth; // reflow
+    msg.classList.add('show');
+    msg.addEventListener('animationend', () => msg.classList.remove('show'), { once: true });
+
+    // 虹色タイル（ゲーム中のみ）
+    clearTimeout(rainbowTimer);
+    document.querySelectorAll('.tile').forEach(t => t.classList.add('rainbow'));
+    rainbowTimer = setTimeout(() => {
+      document.querySelectorAll('.tile').forEach(t => t.classList.remove('rainbow'));
+    }, 12000); // 12秒後に解除
+  }
+})();
 
 // 遊び方モーダル
 (function() {
