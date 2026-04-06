@@ -728,7 +728,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.5.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.6.0</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -845,6 +845,107 @@ const SFX = (() => {
         [523, 659, 784].forEach(f => {
           osc(f, 'sine', t + 0.6, 0.8, 0.25, ac);
         });
+      } catch(e) {}
+    },
+
+    // 5. タイトルBGM：重厚な宇宙ドローン＋コードパッド＋アルペジオ
+    bgmStart() {
+      try {
+        const ac = getCtx();
+        if (ac.state === 'suspended') ac.resume();
+        this._bgmNodes = [];
+
+        // ===== マスターゲイン（フェードイン用） =====
+        const master = ac.createGain();
+        master.gain.setValueAtTime(0, ac.currentTime);
+        master.gain.linearRampToValueAtTime(0.55, ac.currentTime + 3.0);
+        master.connect(ac.destination);
+        this._bgmMaster = master;
+
+        // ===== ベースドローン：低音うねり =====
+        const makeDrone = (freq, detune, vol) => {
+          const o = ac.createOscillator();
+          const g = ac.createGain();
+          // LFO で音量をゆっくり揺らす
+          const lfo = ac.createOscillator();
+          const lfoGain = ac.createGain();
+          lfo.frequency.value = 0.18;
+          lfoGain.gain.value = vol * 0.35;
+          lfo.connect(lfoGain);
+          lfoGain.connect(g.gain);
+          g.gain.value = vol;
+          o.type = 'sine';
+          o.frequency.value = freq;
+          o.detune.value = detune;
+          o.connect(g); g.connect(master);
+          lfo.start(); o.start();
+          this._bgmNodes.push(o, lfo);
+        };
+        makeDrone(55,   0,  0.5);  // A1 ベース
+        makeDrone(55,   6,  0.3);  // わずかデチューン
+        makeDrone(82.5, 0,  0.25); // E2 5th
+        makeDrone(110,  0,  0.2);  // A2 オクターブ上
+
+        // ===== コードパッド：厚みのある和音 =====
+        // Amマイナー系: A-C-E-G (110, 131, 165, 196 Hz)
+        const chordFreqs = [110, 130.8, 164.8, 196, 261.6];
+        chordFreqs.forEach((f, i) => {
+          [-8, 0, 8].forEach(det => {
+            const o = ac.createOscillator();
+            const g = ac.createGain();
+            o.type = i % 2 === 0 ? 'sine' : 'triangle';
+            o.frequency.value = f;
+            o.detune.value = det;
+            g.gain.value = 0.06;
+            o.connect(g); g.connect(master);
+            o.start();
+            this._bgmNodes.push(o);
+          });
+        });
+
+        // ===== アルペジオ：ゆっくり上昇する音列 =====
+        const arpNotes = [110, 165, 220, 261.6, 330, 440, 523, 440, 330, 261.6, 220, 165];
+        const arpInterval = 1.1; // 秒
+        let arpIdx = 0;
+        const scheduleArp = () => {
+          if (!this._bgmActive) return;
+          try {
+            const ac2 = getCtx();
+            const t = ac2.currentTime;
+            const freq = arpNotes[arpIdx % arpNotes.length];
+            const o = ac2.createOscillator();
+            const g = ac2.createGain();
+            o.type = 'sine';
+            o.frequency.value = freq;
+            g.gain.setValueAtTime(0, t);
+            g.gain.linearRampToValueAtTime(0.12, t + 0.05);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+            o.connect(g); g.connect(master);
+            o.start(t); o.stop(t + 0.8);
+            arpIdx++;
+          } catch(e) {}
+          this._bgmArpTimer = setTimeout(scheduleArp, arpInterval * 1000);
+        };
+        this._bgmActive = true;
+        scheduleArp();
+
+      } catch(e) {}
+    },
+
+    bgmStop(fadeTime = 1.5) {
+      try {
+        this._bgmActive = false;
+        clearTimeout(this._bgmArpTimer);
+        if (this._bgmMaster) {
+          const ac = getCtx();
+          this._bgmMaster.gain.setValueAtTime(this._bgmMaster.gain.value, ac.currentTime);
+          this._bgmMaster.gain.linearRampToValueAtTime(0, ac.currentTime + fadeTime);
+          setTimeout(() => {
+            (this._bgmNodes || []).forEach(n => { try { n.stop(); } catch(e) {} });
+            this._bgmNodes = [];
+            this._bgmMaster = null;
+          }, (fadeTime + 0.1) * 1000);
+        }
       } catch(e) {}
     }
   };
@@ -1344,6 +1445,7 @@ document.getElementById('clear-btn').addEventListener('click', () => {
   titleScreen.style.display = '';
   requestAnimationFrame(() => requestAnimationFrame(() => {
     titleScreen.classList.remove('hidden');
+    SFX.bgmStart(); // BGM再開
   }));
 });
 
@@ -1360,6 +1462,7 @@ document.getElementById('overlay-btn').addEventListener('click', () => {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       titleScreen.classList.remove('hidden');
+      SFX.bgmStart(); // BGM再開
     });
   });
 });
@@ -1542,9 +1645,16 @@ if ('serviceWorker' in navigator) {
 resizeGame();
 
 // タイトル画面制御
+// pointerdown でBGM起動（ブラウザのautoplay制限を回避：初回ユーザー操作で AudioContext を解放）
+document.getElementById('start-btn').addEventListener('pointerdown', () => {
+  SFX.bgmStart();
+}, { once: true });
+
 document.getElementById('start-btn').addEventListener('click', () => {
   const titleScreen = document.getElementById('title-screen');
   const gameScreen  = document.getElementById('game-screen');
+
+  SFX.bgmStop(0.8); // BGMフェードアウト
 
   titleScreen.classList.add('hidden');
   setTimeout(() => { titleScreen.style.display = 'none'; }, 650);
