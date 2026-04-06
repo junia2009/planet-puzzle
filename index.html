@@ -728,7 +728,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.6.1</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.7.0</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -932,10 +932,111 @@ const SFX = (() => {
       } catch(e) {}
     },
 
+    // 5b. ゲーム中BGM：攻略感のある重厉な宇宙BGM
+    bgmGame() {
+      try {
+        const ac = getCtx();
+        if (ac.state === 'suspended') ac.resume();
+        this._bgmNodes = [];
+        this._bgmActive = true;
+
+        // マスターゲイン（フェードイン）
+        const master = ac.createGain();
+        master.gain.setValueAtTime(0, ac.currentTime);
+        master.gain.linearRampToValueAtTime(0.5, ac.currentTime + 2.0);
+        master.connect(ac.destination);
+        this._bgmMaster = master;
+
+        // ベースドローン（タイトルと同系統、少しリズミカルに）
+        const makeDrone = (freq, detune, vol) => {
+          const o = ac.createOscillator();
+          const g = ac.createGain();
+          const lfo = ac.createOscillator();
+          const lfoGain = ac.createGain();
+          lfo.frequency.value = 0.28;
+          lfoGain.gain.value = vol * 0.28;
+          lfo.connect(lfoGain);
+          lfoGain.connect(g.gain);
+          g.gain.value = vol;
+          o.type = 'sine';
+          o.frequency.value = freq;
+          o.detune.value = detune;
+          o.connect(g); g.connect(master);
+          lfo.start(); o.start();
+          this._bgmNodes.push(o, lfo);
+        };
+        makeDrone(55,   0,  0.55);
+        makeDrone(55,   7,  0.28);
+        makeDrone(82.5, 0,  0.28);
+        makeDrone(110,  0,  0.20);
+
+        // コードパッド（Am7系）
+        [110, 130.8, 164.8, 220, 261.6].forEach((f, i) => {
+          [-6, 0, 6].forEach(det => {
+            const o = ac.createOscillator();
+            const g = ac.createGain();
+            o.type = i % 2 === 0 ? 'sine' : 'triangle';
+            o.frequency.value = f;
+            o.detune.value = det;
+            g.gain.value = 0.052;
+            o.connect(g); g.connect(master);
+            o.start();
+            this._bgmNodes.push(o);
+          });
+        });
+
+        // リズムパルス（低音キック風、毎0.5秒）
+        const scheduleKick = () => {
+          if (!this._bgmActive) return;
+          try {
+            const ac2 = getCtx();
+            const t = ac2.currentTime;
+            const o = ac2.createOscillator();
+            const g = ac2.createGain();
+            o.type = 'sine';
+            o.frequency.setValueAtTime(110, t);
+            o.frequency.exponentialRampToValueAtTime(38, t + 0.14);
+            g.gain.setValueAtTime(0.42, t);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+            o.connect(g); g.connect(master);
+            o.start(t); o.stop(t + 0.22);
+          } catch(e) {}
+          this._bgmKickTimer = setTimeout(scheduleKick, 500);
+        };
+        scheduleKick();
+
+        // アルペジオ（タイトルより少し早いリズム、力強い上昇メロディ）
+        const arpNotes = [220, 261.6, 329.6, 392, 440, 523, 440, 392, 329.6, 261.6, 220, 196];
+        let arpIdx = 0;
+        const scheduleArp2 = () => {
+          if (!this._bgmActive) return;
+          try {
+            const ac2 = getCtx();
+            const t = ac2.currentTime;
+            const freq = arpNotes[arpIdx % arpNotes.length];
+            const o = ac2.createOscillator();
+            const g = ac2.createGain();
+            o.type = 'sine';
+            o.frequency.value = freq;
+            g.gain.setValueAtTime(0, t);
+            g.gain.linearRampToValueAtTime(0.16, t + 0.03);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
+            o.connect(g); g.connect(master);
+            o.start(t); o.stop(t + 0.52);
+            arpIdx++;
+          } catch(e) {}
+          this._bgmArpTimer = setTimeout(scheduleArp2, 650);
+        };
+        scheduleArp2();
+
+      } catch(e) {}
+    },
+
     bgmStop(fadeTime = 1.5) {
       try {
         this._bgmActive = false;
         clearTimeout(this._bgmArpTimer);
+        clearTimeout(this._bgmKickTimer);
         if (this._bgmMaster) {
           const ac = getCtx();
           this._bgmMaster.gain.setValueAtTime(this._bgmMaster.gain.value, ac.currentTime);
@@ -995,6 +1096,7 @@ function init() {
   updateBlockedState();
   renderSlots();
   updateTileCount();
+  SFX.bgmGame(); // ゲーム中BGM開始
 }
 
 // ===== タイル生成 =====
@@ -1293,6 +1395,7 @@ function updateTileCount() {
 // ===== ゲーム状態チェック =====
 function checkGameState() {
   if (tiles.length === 0) {
+    SFX.bgmStop(0.4);
     SFX.clear();
     showClearOverlay();
     gameOver = true;
@@ -1300,6 +1403,7 @@ function checkGameState() {
   }
   const totalSlots = BASE_SLOTS + extraSlots;
   if (slots.length >= totalSlots) {
+    SFX.bgmStop(0.3);
     SFX.gameover();
     const removed = totalTiles - tiles.length - slots.length;
     const pct = Math.floor(removed / totalTiles * 100);
