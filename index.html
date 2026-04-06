@@ -728,7 +728,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.4.3</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.4.4</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -980,19 +980,21 @@ function onTileClick(id) {
   const dy = targetY - tileScreenY;
   const targetScale = slotSize / tileScreenSize;
 
-  // 飛翔クローンを生成
+  // 飛翔専用フルスクリーンレイヤー（position:fixed+absolute内包でiOS視覚座標を確実に一致させる）
+  const flyLayer = document.createElement('div');
+  flyLayer.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:99999;';
+  document.body.appendChild(flyLayer);
+
   const clone = tile.elem.cloneNode(true);
-  clone.style.position = 'fixed';
+  clone.style.position = 'absolute';
   clone.style.left = tileScreenX + 'px';
   clone.style.top = tileScreenY + 'px';
   clone.style.width = tileScreenSize + 'px';
   clone.style.height = tileScreenSize + 'px';
   clone.style.fontSize = (tileScreenSize * 0.731) + 'px';
   clone.style.borderRadius = Math.round(14 * scale) + 'px';
-  clone.style.zIndex = '99999';
-  clone.style.pointerEvents = 'none';
   clone.style.transformOrigin = 'top left';
-  document.body.appendChild(clone);
+  flyLayer.appendChild(clone);
 
   // タイルをゲームエリアから除去
   tile.elem.remove();
@@ -1003,20 +1005,28 @@ function onTileClick(id) {
   slots = tempSlots;
   isAnimating = true;
 
-  // Web Animations API（iOS SafariでもCSS transitionより確実に動作）
+  // Web Animations API
+  // delay:16 でiOS WebKitに初期フレームを1枚描画させてからアニメーション開始
   const anim = clone.animate([
     { transform: 'translate(0, 0) scale(1)',                                     opacity: '1'   },
     { transform: `translate(${dx}px, ${dy}px) scale(${targetScale})`,           opacity: '0.7' }
   ], {
-    duration: 180,
+    duration: 220,
+    delay: 16,
     easing: 'cubic-bezier(0.4, 0, 0.8, 0.6)',
-    fill: 'forwards'
+    fill: 'both'
   });
 
-  anim.onfinish = () => {
-    clone.remove();
+  // iOS WebKitではonfinishが発火しない場合があるためsetTimeoutでフォールバック
+  let done = false;
+  const onDone = () => {
+    if (done) return;
+    done = true;
+    flyLayer.remove();
     _afterFlyComplete();
   };
+  anim.addEventListener('finish', onDone);
+  setTimeout(onDone, 300);
 }
 
 // ===== マッチチェック =====
