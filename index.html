@@ -724,7 +724,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.12.1</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.12.2</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -936,7 +936,7 @@ const SFX = (() => {
         // マスターゲイン（フェードイン）
         const master = ac.createGain();
         master.gain.setValueAtTime(0, ac.currentTime);
-        master.gain.linearRampToValueAtTime(0.44, ac.currentTime + 3.0);
+        master.gain.linearRampToValueAtTime(0.44, ac.currentTime + 2.2);
         master.connect(ac.destination);
         this._bgmMaster = master;
 
@@ -961,8 +961,8 @@ const SFX = (() => {
           const lfoG = ac.createGain();
           const g   = ac.createGain();
           const f   = ac.createBiquadFilter();
-          f.type = 'lowpass'; f.frequency.value = 700; f.Q.value = 0.8;
-          lfo.frequency.value = 0.22; lfoG.gain.value = vol * 0.15;
+          f.type = 'lowpass'; f.frequency.value = 1100; f.Q.value = 0.7;
+          lfo.frequency.value = 0.38; lfoG.gain.value = vol * 0.14;
           lfo.connect(lfoG); lfoG.connect(g.gain);
           o.type = 'triangle'; o.frequency.value = freq; o.detune.value = detune;
           g.gain.value = vol;
@@ -970,10 +970,11 @@ const SFX = (() => {
           lfo.start(); o.start();
           this._bgmNodes.push(o, lfo);
         };
-        makeDrone(41.2,  0.28);
-        makeDrone(41.2,  0.11,  8);
-        makeDrone(61.7,  0.18);
-        makeDrone(82.4,  0.12);
+        makeDrone(41.2,  0.24);      // E1
+        makeDrone(41.2,  0.09,  8);   // E1 detuned
+        makeDrone(51.9,  0.16);      // G#1 ← Eメジャー明るさのキー
+        makeDrone(61.7,  0.16);      // B1
+        makeDrone(82.4,  0.10);      // E2
 
         // -----------------------------------------------
         // ヨーダのテーマ 音符定義（Eメジャー）
@@ -981,10 +982,11 @@ const SFX = (() => {
         const E3=164.8, Fs3=185.0, Gs3=207.7, A3=220.0, B3=246.9,
               Cs4=277.2, D4=293.7,  E4=329.6,  Fs4=370.0, Gs4=415.3,
               A4=440.0,  B4=493.9,
-              E2=82.4,   B2=123.5,  Fs2=92.5,  A2=110.0,  Cs3=138.6;
+              E2=82.4,   Gs2=103.8, B2=123.5,  Cs3=138.6, Ds3=155.6,
+              Fs3_=185.0, A2=110.0, Fs2=92.5;
 
-        // BPM=84、♩=714ms
-        const BPM = 84;
+        // BPM=92、♩=652ms（少し弾んだテンポ）
+        const BPM = 92;
         const Q  = 60000 / BPM;
         const H  = Q * 2;
         const DQ = Q * 1.5;
@@ -1025,7 +1027,7 @@ const SFX = (() => {
         const playNote = (freq, durMs, vol, startSec) => {
           if (freq === 0) return;
           const durSec = durMs / 1000;
-          const atk = 0.08, rel = Math.min(0.4, durSec * 0.35);
+          const atk = 0.055, rel = Math.min(0.38, durSec * 0.32);
 
           // メイン（triangle）
           const o1  = ac.createOscillator();
@@ -1036,9 +1038,9 @@ const SFX = (() => {
           const vibG = ac.createGain();
           const g   = ac.createGain();
           const flt = ac.createBiquadFilter();
-          flt.type = 'lowpass'; flt.frequency.value = 2800; flt.Q.value = 1.2;
+          flt.type = 'lowpass'; flt.frequency.value = 3600; flt.Q.value = 1.0;
 
-          vib.frequency.value = 5.2; vibG.gain.value = freq * 0.012;
+          vib.frequency.value = 5.6; vibG.gain.value = freq * 0.011;
           vib.connect(vibG); vibG.connect(o1.frequency); vibG.connect(o2.frequency);
 
           o1.type = 'triangle'; o1.frequency.value = freq;
@@ -1059,12 +1061,12 @@ const SFX = (() => {
         };
 
         // ハープ風アルペジオ（Eメジャーコード循環）
-        // コード進行: Em → Am → Bm → Em
+        // コード進行: Emaj → Amaj → C#m → Bmaj（明るく希望感ある進行）
         const chords = [
-          [E2, B2, E3, Gs3, B3],   // Emaj
-          [A2, E3, A3, Cs4, E4 ],  // Amaj
-          [Fs2,Cs3,Fs3,A3,  Cs4],  // F#m
-          [B2, Fs3,B3, D4,  Fs4],  // Bmaj
+          [E2, Gs2, B2, E3,  Gs3],  // Emaj（G#を加えて明確なメジャー）
+          [A2, Cs3, E3, A3,  Cs4],  // Amaj
+          [Cs3,Gs3, Cs4,E4,  Gs4],  // C#m（橋渡し・深み）
+          [B2, Ds3, Fs3,B3,  Ds4],  // Bmaj
         ];
 
         const loopMs = melody.reduce((s, n) => s + n[1], 0);
@@ -1091,7 +1093,7 @@ const SFX = (() => {
               const g = ac.createGain();
               // ハープ音色: 高めのサイン波
               o.type = 'sine'; o.frequency.value = freq;
-              const peak = 0.07 - i * 0.008;
+              const peak = 0.09 - i * 0.008;
               g.gain.setValueAtTime(0, at);
               g.gain.linearRampToValueAtTime(peak, at + 0.025);
               g.gain.exponentialRampToValueAtTime(0.0001, at + arpNoteDur / 1000 * 3.5);
