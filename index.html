@@ -724,7 +724,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.9.6</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.9.7</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -1795,8 +1795,11 @@ function spawnSpaceship() {
 
   const isXW  = Math.random() < 0.5;
   const goRTL = Math.random() < 0.5;
-  // 飛行角度: -30〜+30度の範囲でランダム
-  const ang   = Math.round(Math.random() * 60 - 30);
+  // 飛行角度: XWは±20〜±45度（常にはっきり傾く）、TIEは-30〜+30度
+  const sign  = Math.random() < 0.5 ? 1 : -1;
+  const ang   = isXW
+    ? sign * (20 + Math.round(Math.random() * 25))   // ±20〜±45
+    : Math.round(Math.random() * 60 - 30);            // -30〜+30
   // XWは大きめ、TIEは小さめ
   const svgW  = isXW ? (58 + Math.round(Math.random() * 32)) : (36 + Math.round(Math.random() * 28));
   const svgH  = isXW ? Math.round(svgW * 38 / 95) : Math.round(svgW * 64 / 96);
