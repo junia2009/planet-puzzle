@@ -714,7 +714,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.8.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.8.1</div>
   <button id="start-btn">GAME START</button>
 </div>
 
@@ -733,7 +733,7 @@
 
 <div id="skill-area">
   <button class="skill-btn" id="skill-shuffle">
-    <span class="skill-icon">🔀</span>シャッフル
+    <span class="skill-icon">🔀</span>シャッフル <span id="shuffle-count">3</span>
   </button>
   <button class="skill-btn" id="skill-undo">
     <span class="skill-icon">↩️</span>元に戻す
@@ -1017,6 +1017,7 @@ const JITTER = 0;             // グリッド配置なのでずれなし
 let tiles = [];         // { id, type, x, y, layer, elem, blocked }
 let slots = [];         // スロットに入ったタイル種類の配列
 let slotTypeOrder = []; // 各タイプの初登場順
+let shuffleRemain = 3;  // シャッフル残り回数
 let history = [];       // アンドゥ用スタック [{tiles, slots}]
 let gameOver = false;
 let isAnimating = false;
@@ -1032,7 +1033,8 @@ function init() {
   isAnimating = false;
 
   document.getElementById('game-area').innerHTML = '';
-  document.getElementById('skill-shuffle').disabled = false;
+  shuffleRemain = 3;
+  updateShuffleBtn();
   document.getElementById('skill-undo').disabled = true;
 
   generateTiles();
@@ -1354,11 +1356,19 @@ function checkGameState() {
 }
 
 // ===== スキル =====
+function updateShuffleBtn() {
+  const btn = document.getElementById('skill-shuffle');
+  document.getElementById('shuffle-count').textContent = shuffleRemain;
+  btn.disabled = shuffleRemain <= 0;
+}
+
 document.getElementById('skill-shuffle').addEventListener('click', () => {
-  if (gameOver || isAnimating) return;
+  if (gameOver || isAnimating || shuffleRemain <= 0) return;
   saveHistory();
   shuffleTilePositions();
   updateBlockedState();
+  shuffleRemain--;
+  updateShuffleBtn();
 });
 
 document.getElementById('skill-undo').addEventListener('click', () => {
