@@ -82,6 +82,7 @@
       font-size: min(9rem, 22vw);
       animation: planet-float 4s ease-in-out infinite;
       filter: drop-shadow(0 0 40px rgba(167,139,250,0.8));
+      will-change: transform;
     }
 
     @keyframes planet-float {
@@ -95,6 +96,7 @@
       border-radius: 50%;
       border: 1px solid rgba(167,139,250,0.2);
       animation: orbit-spin 8s linear infinite;
+      will-change: transform;
     }
 
     .orbit-ring::after {
@@ -120,6 +122,7 @@
       border-radius: 50%;
       border: 1px solid rgba(244,114,182,0.2);
       animation: orbit-spin 5s linear infinite reverse;
+      will-change: transform;
     }
 
     .orbit-ring-2::after {
@@ -307,6 +310,7 @@
       border-radius: 50%;
       pointer-events: none;
       animation: shoot linear forwards;
+      will-change: transform, opacity;
     }
 
     @keyframes shoot {
@@ -322,6 +326,7 @@
       pointer-events: none;
       filter: drop-shadow(0 0 5px rgba(140,210,255,0.45));
       transform-origin: 50% 50%;
+      will-change: transform, opacity;
     }
 
     /* ゲーム画面 */
@@ -845,6 +850,7 @@
       pointer-events: none;
       animation: confetti-fall linear forwards;
       z-index: 10002;
+      will-change: transform, opacity;
     }
     @keyframes confetti-fall {
       0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
@@ -858,6 +864,7 @@
       pointer-events: none;
       animation: star-burst-anim ease-out forwards;
       z-index: 10002;
+      will-change: transform, opacity;
     }
     @keyframes star-burst-anim {
       0%   { transform: scale(0) rotate(0deg); opacity: 1; }
@@ -874,6 +881,7 @@
     .slot.match-exit {
       animation: match-exit 360ms ease-in forwards;
       pointer-events: none;
+      will-change: transform, opacity, filter;
     }
   </style>
 </head>
@@ -887,7 +895,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.13.2</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.14.0</div>
   <button id="start-btn">GAME START</button>
   <button id="how-to-btn">遊び方</button>
 </div>
@@ -1545,6 +1553,7 @@ function onTileClick(id) {
   clone.style.fontSize = (tileScreenSize * 0.731) + 'px';
   clone.style.borderRadius = Math.round(14 * scale) + 'px';
   clone.style.transformOrigin = 'top left';
+  clone.style.willChange = 'transform, opacity';
   flyLayer.appendChild(clone);
 
   // タイルをゲームエリアから除去
@@ -1552,15 +1561,17 @@ function onTileClick(id) {
   tiles = tiles.filter(t => t.id !== id);
   updateBlockedState();
 
-  // slots を更新してアニメーション開始
+  // slots を先に確定 → スロット側を即描画しておく（飛翔中に着地点が空に見えない）
   slots = tempSlots;
+  renderSlots();
   isAnimating = true;
 
   // Web Animations API
   // delay:16 でiOS WebKitに初期フレームを1枚描画させてからアニメーション開始
+  // 着地時 opacity:0 にすることで、裏で描画済みのスロットへシームレスに溶け込む
   const anim = clone.animate([
-    { transform: 'translate(0, 0) scale(1)',                                     opacity: '1'   },
-    { transform: `translate(${dx}px, ${dy}px) scale(${targetScale})`,           opacity: '0.7' }
+    { transform: 'translate3d(0, 0, 0) scale(1)',                                  opacity: '1' },
+    { transform: `translate3d(${dx}px, ${dy}px, 0) scale(${targetScale})`,         opacity: '0' }
   ], {
     duration: 220,
     delay: 16,
@@ -1604,16 +1615,15 @@ function _afterFlyComplete() {
   });
 
   if (matchedType === -1) {
-    renderSlots();
+    // スロットは飛翔開始時に描画済み。タイル残数のみ更新。
     updateTileCount();
     checkGameState();
     isAnimating = false;
     return;
   }
 
-  // マッチあり：スロットを描画してから消去アニメーション
+  // マッチあり：3枚に match-exit を付与（既描画のスロットDOMを利用）
   SFX.match();
-  renderSlots();
   const slotAreaElem = document.getElementById('slot-area');
   const allSlotDivs = slotAreaElem.querySelectorAll('.slot');
   let matchCount = 0;
@@ -1633,21 +1643,49 @@ function _afterFlyComplete() {
   }, 400);
 }
 
-// ===== スロット描画 =====
+// ===== スロット描画（差分更新） =====
+// 全innerHTML書き換えだと毎タップごとに大量のレイアウト計算が走るため、
+// 既存DOMを再利用して属性のみ書き換える。
 function renderSlots() {
   const area = document.getElementById('slot-area');
-  area.innerHTML = '';
+  let divs = area.children;
+
+  // 個数合わせ
+  while (divs.length < BASE_SLOTS) {
+    const d = document.createElement('div');
+    d.className = 'slot';
+    area.appendChild(d);
+  }
+  while (divs.length > BASE_SLOTS) {
+    area.removeChild(area.lastChild);
+  }
 
   for (let i = 0; i < BASE_SLOTS; i++) {
-    const div = document.createElement('div');
-    div.className = 'slot';
-    if (slots[i] !== undefined) {
-      div.classList.add('filled');
-      div.style.background = getTileColor(slots[i]);
-      div.style.border = '2px solid rgba(255,255,255,0.4)';
-      div.textContent = TILE_TYPES[slots[i]];
+    const div = divs[i];
+    // match-exit が付いている場合はリセット
+    if (div.classList.contains('match-exit')) {
+      div.classList.remove('match-exit');
     }
-    area.appendChild(div);
+    if (slots[i] !== undefined) {
+      const type = slots[i];
+      const emoji = TILE_TYPES[type];
+      const bg = getTileColor(type);
+      if (!div.classList.contains('filled')) div.classList.add('filled');
+      if (div._bg !== bg) {
+        div.style.background = bg;
+        div.style.border = '2px solid rgba(255,255,255,0.4)';
+        div._bg = bg;
+      }
+      if (div.textContent !== emoji) div.textContent = emoji;
+    } else {
+      if (div.classList.contains('filled')) div.classList.remove('filled');
+      if (div._bg) {
+        div.style.background = '';
+        div.style.border = '';
+        div._bg = null;
+      }
+      if (div.textContent) div.textContent = '';
+    }
   }
 }
 
@@ -1826,6 +1864,7 @@ document.getElementById('clear-btn').addEventListener('click', () => {
   requestAnimationFrame(() => requestAnimationFrame(() => {
     titleScreen.classList.remove('hidden');
     SFX.bgmStart(); // BGM再開
+    if (window.__applyUpdateIfSafe) window.__applyUpdateIfSafe();
   }));
 });
 
@@ -1843,6 +1882,7 @@ document.getElementById('overlay-btn').addEventListener('click', () => {
     requestAnimationFrame(() => {
       titleScreen.classList.remove('hidden');
       SFX.bgmStart(); // BGM再開
+      if (window.__applyUpdateIfSafe) window.__applyUpdateIfSafe();
     });
   });
 });
@@ -2013,10 +2053,42 @@ window.addEventListener('orientationchange', () => setTimeout(resizeGame, 150));
   } catch (e) {}
 })();
 
-// ===== Service Worker 登録 =====
+// ===== Service Worker 登録 & 自動更新 =====
+// 新バージョンが配信されたら、ゲーム中でなければ自動でリロードする。
+// プレイ中は updateReady を立てるだけにし、タイトルに戻った時に反映する。
+window.__updateReady = false;
+window.__applyUpdateIfSafe = function () {
+  if (!window.__updateReady) return;
+  const gs = document.getElementById('game-screen');
+  const inGame = gs && gs.classList.contains('visible');
+  if (inGame) return; // ゲーム中は保留
+  window.location.reload();
+};
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      // 起動時に一度更新確認、その後は1分ごと（タブが見えている時のみ）
+      const ping = () => { if (!document.hidden) reg.update().catch(() => {}); };
+      ping();
+      setInterval(ping, 60000);
+      document.addEventListener('visibilitychange', ping);
+    }).catch(() => {});
+
+    // 既に制御下にあるタブが新SWに切り替わったらリロード
+    // 初回インストール (hadController=false) では発火させない
+    const hadController = !!navigator.serviceWorker.controller;
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || refreshing) return;
+      window.__updateReady = true;
+      const gs = document.getElementById('game-screen');
+      const inGame = gs && gs.classList.contains('visible');
+      if (!inGame) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
   });
 }
 
@@ -2097,6 +2169,7 @@ document.getElementById('start-btn').addEventListener('click', () => {
 
 // 流れ星を定期生成
 function spawnShootingStar() {
+  if (document.hidden) return;
   const star = document.createElement('div');
   star.className = 'shooting-star';
   star.style.top  = Math.random() * 60 + 'vh';
@@ -2286,6 +2359,7 @@ function spawnHyperLines(cx, cy, rot, goRTL) {
 }
 
 function spawnSpaceship() {
+  if (document.hidden) return;
   const _gs = document.getElementById('game-screen');
   const _ts = document.getElementById('title-screen');
   if (!_gs.classList.contains('visible') && _ts.classList.contains('hidden')) return;
