@@ -895,7 +895,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.14.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.15.0</div>
   <button id="start-btn">GAME START</button>
   <button id="how-to-btn">遊び方</button>
 </div>
@@ -1477,17 +1477,35 @@ function generateTiles() {
 
 // ===== ブロック状態更新 =====
 // あるタイルの上に（zIndexが大きく、座標が重なる）別のタイルがあればブロック
+function isBlockedBy(t, other) {
+  if (other.id === t.id) return false;
+  // zIndexが低ければブロックしない。同じzIndexの場合はid大（DOM後方）が視覚的に上
+  if (other.zIndex < t.zIndex) return false;
+  if (other.zIndex === t.zIndex && other.id <= t.id) return false;
+  return rectsOverlap(t, other);
+}
+
+function recomputeBlocked(t) {
+  const blocked = tiles.some(other => isBlockedBy(t, other));
+  if (t.blocked !== blocked) {
+    t.blocked = blocked;
+    t.elem.classList.toggle('blocked', blocked);
+  }
+}
+
 function updateBlockedState() {
-  tiles.forEach(t => {
-    t.blocked = tiles.some(other => {
-      if (other.id === t.id) return false;
-      // zIndexが低ければブロックしない。同じzIndexの場合はid大（DOM後方）が視覚的に上
-      if (other.zIndex < t.zIndex) return false;
-      if (other.zIndex === t.zIndex && other.id <= t.id) return false;
-      return rectsOverlap(t, other);
-    });
-    t.elem.classList.toggle('blocked', t.blocked);
-  });
+  // 全タイルを再判定（シャッフル・アンドゥなど構造が大きく変わる操作用）
+  tiles.forEach(recomputeBlocked);
+}
+
+// タイル1枚を取り除いた直後の差分更新。
+// 除去できるのは「ブロックされていない＝最前面」のタイルだけなので、
+// 状態が変わり得るのは removed と座標が重なるタイルのみ（最大数枚）。
+// 全 O(n²) 走査を避け、近傍だけ再判定することで毎タップのカクつきを解消する。
+function updateBlockedAround(removed) {
+  for (const t of tiles) {
+    if (rectsOverlap(t, removed)) recomputeBlocked(t);
+  }
 }
 
 function rectsOverlap(a, b) {
@@ -1559,7 +1577,6 @@ function onTileClick(id) {
   // タイルをゲームエリアから除去
   tile.elem.remove();
   tiles = tiles.filter(t => t.id !== id);
-  updateBlockedState();
 
   // slots を先に確定 → スロット側を即描画しておく（飛翔中に着地点が空に見えない）
   slots = tempSlots;
@@ -1578,6 +1595,10 @@ function onTileClick(id) {
     easing: 'cubic-bezier(0.4, 0, 0.8, 0.6)',
     fill: 'both'
   });
+
+  // ブロック再計算（露出したタイルの明度更新）はアニメ開始後の次フレームへ。
+  // 飛翔の初期フレームをメインスレッドでブロックしないことでカクつきを防ぐ。
+  requestAnimationFrame(() => updateBlockedAround(tile));
 
   // iOS WebKitではonfinishが発火しない場合があるためsetTimeoutでフォールバック
   let done = false;
@@ -1757,6 +1778,8 @@ function shuffleTilePositions() {
     tile.type = types[i];
     tile.elem.textContent = TILE_TYPES[types[i]];
     tile.elem.className = `tile tile-${types[i]}`;
+    // classNameリセットで消えたblockedクラスを復元（位置不変なので状態は同じ）
+    if (tile.blocked) tile.elem.classList.add('blocked');
   });
 }
 
@@ -1789,6 +1812,8 @@ function restoreHistory() {
     elem.style.zIndex = st.zIndex;
     elem.textContent = TILE_TYPES[st.type];
     elem.dataset.id = st.id;
+    // blockedクラスを復元値に同期（recomputeBlockedは変化時のみ切替するため）
+    if (st.blocked) elem.classList.add('blocked');
     const tile = { ...st, elem };
     elem.addEventListener('click', () => onTileClick(tile.id));
     gameArea.appendChild(elem);
