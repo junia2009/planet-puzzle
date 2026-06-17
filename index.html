@@ -899,7 +899,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.15.1</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.15.2</div>
   <button id="start-btn">GAME START</button>
   <button id="how-to-btn">遊び方</button>
 </div>
@@ -1588,14 +1588,16 @@ function onTileClick(id) {
   isAnimating = true;
 
   // Web Animations API
-  // 着地時 opacity:0 にすることで、裏で描画済みのスロットへシームレスに溶け込む。
-  // ease-out（出だしが速い）で、浮き上がらず即スロットへ向かう直線的な動きにする。
+  // 飛翔の軌跡がしっかり見えるよう duration を確保し、滑らかな加減速カーブにする。
+  // opacity は終盤(82%)まで不透明を保ち、着地間際にスッと消すことで
+  // 「移動中に消えていく」印象を避けつつ、裏で描画済みのスロットへ溶け込ませる。
   const anim = clone.animate([
-    { transform: 'translate3d(0, 0, 0) scale(1)',                                  opacity: '1' },
-    { transform: `translate3d(${dx}px, ${dy}px, 0) scale(${targetScale})`,         opacity: '0' }
+    { transform: 'translate3d(0, 0, 0) scale(1)',                          opacity: '1', offset: 0 },
+    { opacity: '1', offset: 0.82 },
+    { transform: `translate3d(${dx}px, ${dy}px, 0) scale(${targetScale})`, opacity: '0', offset: 1 }
   ], {
-    duration: 200,
-    easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
+    duration: 340,
+    easing: 'cubic-bezier(0.34, 0, 0.2, 1)',
     fill: 'both'
   });
 
@@ -1612,7 +1614,7 @@ function onTileClick(id) {
     _afterFlyComplete();
   };
   anim.addEventListener('finish', onDone);
-  setTimeout(onDone, 300);
+  setTimeout(onDone, 500); // duration(340ms)より長く。早すぎると着地前に打ち切られる
 }
 
 // ===== マッチチェック =====
