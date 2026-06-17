@@ -427,10 +427,14 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    .tile:hover:not(.blocked) {
-      transform: scale(1.1) translateY(-2px);
-      box-shadow: 0 6px 20px rgba(167,139,250,0.5), inset 0 1px 0 rgba(255,255,255,0.5);
-      z-index: 9999 !important;
+    /* hover効果はマウス等のhover対応端末のみ。
+       タッチ端末ではタップ時にhoverが残留してタイルが「浮き上がって」見えるため除外する。 */
+    @media (hover: hover) and (pointer: fine) {
+      .tile:hover:not(.blocked) {
+        transform: scale(1.1) translateY(-2px);
+        box-shadow: 0 6px 20px rgba(167,139,250,0.5), inset 0 1px 0 rgba(255,255,255,0.5);
+        z-index: 9999 !important;
+      }
     }
 
     .tile.blocked {
@@ -895,7 +899,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.15.0</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.15.1</div>
   <button id="start-btn">GAME START</button>
   <button id="how-to-btn">遊び方</button>
 </div>
@@ -1584,15 +1588,14 @@ function onTileClick(id) {
   isAnimating = true;
 
   // Web Animations API
-  // delay:16 でiOS WebKitに初期フレームを1枚描画させてからアニメーション開始
-  // 着地時 opacity:0 にすることで、裏で描画済みのスロットへシームレスに溶け込む
+  // 着地時 opacity:0 にすることで、裏で描画済みのスロットへシームレスに溶け込む。
+  // ease-out（出だしが速い）で、浮き上がらず即スロットへ向かう直線的な動きにする。
   const anim = clone.animate([
     { transform: 'translate3d(0, 0, 0) scale(1)',                                  opacity: '1' },
     { transform: `translate3d(${dx}px, ${dy}px, 0) scale(${targetScale})`,         opacity: '0' }
   ], {
-    duration: 220,
-    delay: 16,
-    easing: 'cubic-bezier(0.4, 0, 0.8, 0.6)',
+    duration: 200,
+    easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
     fill: 'both'
   });
 
