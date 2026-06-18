@@ -899,7 +899,7 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.15.2</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.15.3</div>
   <button id="start-btn">GAME START</button>
   <button id="how-to-btn">遊び方</button>
 </div>
@@ -1355,6 +1355,7 @@ let slots = [];         // スロットに入ったタイル種類の配列
 let slotTypeOrder = []; // 各タイプの初登場順
 let shuffleRemain = 3;  // シャッフル残り回数
 let undoRemain = 3;     // 元に戻す残り回数
+const MAX_HISTORY = 3;  // アンドゥ履歴の保持上限（undoRemainと同数で十分。無制限保持を防ぐ）
 let history = [];       // アンドゥ用スタック [{tiles, slots}]
 let gameOver = false;
 let isAnimating = false;
@@ -1795,6 +1796,9 @@ function saveHistory() {
     slots: [...slots],
     slotTypeOrder: [...slotTypeOrder]
   });
+  // 直近 MAX_HISTORY 件のみ保持（アンドゥは最大3回なので古いスナップショットは不要）。
+  // 毎タップで全タイルをコピーするため、無制限保持だと長丁場でメモリが膨張する。
+  if (history.length > MAX_HISTORY) history.splice(0, history.length - MAX_HISTORY);
   // undoボタンの有効/無効はundoRemainで管理するため更新のみ
   updateUndoBtn();
 }
