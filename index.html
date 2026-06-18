@@ -887,6 +887,94 @@
       pointer-events: none;
       will-change: transform, opacity, filter;
     }
+
+    /* ========== ステージ選択画面 ========== */
+    #stage-select {
+      position: fixed;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 4800;
+      padding: 24px;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    #stage-select.visible { display: flex; opacity: 1; }
+
+    #stage-select-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.5rem, 7vw, 2.3rem);
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #fff;
+      text-shadow: 0 0 24px rgba(167,139,250,0.8);
+      margin-bottom: 28px;
+    }
+
+    #stage-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      width: min(380px, 92vw);
+      margin-bottom: 28px;
+    }
+
+    .stage-cell {
+      aspect-ratio: 1;
+      border-radius: 14px;
+      border: 1px solid rgba(167,139,250,0.4);
+      background: linear-gradient(135deg, rgba(99,51,153,0.35), rgba(20,80,160,0.35));
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .stage-cell:hover, .stage-cell:active {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 6px 20px rgba(167,139,250,0.5);
+    }
+    .stage-cell .stage-no { font-size: 1.4rem; font-weight: 900; line-height: 1; }
+    .stage-cell .stage-info {
+      font-size: 0.58rem;
+      color: rgba(255,255,255,0.65);
+      letter-spacing: 1px;
+    }
+    .stage-cell.cleared {
+      border-color: rgba(52,211,153,0.65);
+      box-shadow: inset 0 0 12px rgba(52,211,153,0.18);
+    }
+    .stage-cell.cleared .stage-info { color: #34d399; }
+    .stage-cell.locked {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.28);
+      cursor: not-allowed;
+    }
+    .stage-cell.locked:hover, .stage-cell.locked:active {
+      transform: none;
+      box-shadow: none;
+    }
+
+    #stage-back {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.85);
+      font-family: 'Orbitron', sans-serif;
+      padding: 10px 26px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    #stage-back:hover, #stage-back:active { background: rgba(255,255,255,0.1); }
   </style>
 </head>
 <body>
@@ -899,9 +987,15 @@
   </div>
   <div id="title-logo">PLANET<br>PUZZLE</div>
   <div id="title-sub">Match the planets · Clear the sky</div>
-  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.15.3</div>
+  <div style="position:absolute;bottom:max(24px,env(safe-area-inset-bottom,24px));font-size:0.7rem;letter-spacing:2px;color:rgba(255,255,255,0.2);font-family:'Orbitron',sans-serif;">ver 2.16.0</div>
   <button id="start-btn">GAME START</button>
   <button id="how-to-btn">遊び方</button>
+</div>
+
+<div id="stage-select">
+  <div id="stage-select-title">SELECT STAGE</div>
+  <div id="stage-grid"></div>
+  <button id="stage-back">← タイトルへ</button>
 </div>
 
 <div id="force-msg"><span>May the Force be with you ✨</span></div>
@@ -914,7 +1008,8 @@
     <h3>基本ルール</h3>
     <div class="howto-row"><span class="howto-icon">👆</span><span>タイルをタップするとスロット（下段）に送られます。</span></div>
     <div class="howto-row"><span class="howto-icon">✨</span><span>スロットに同じ種類が <strong>3枚</strong> 揃うと自動で消去されます。</span></div>
-    <div class="howto-row"><span class="howto-icon">🏆</span><span>すべてのタイル（405枚）を消せば <strong>MISSION COMPLETE！</strong></span></div>
+    <div class="howto-row"><span class="howto-icon">🏆</span><span>盤面のタイルをすべて消せば <strong>STAGE CLEAR！</strong> 次のステージが解放されます。</span></div>
+    <div class="howto-row"><span class="howto-icon">🪐</span><span>ステージが上がるほど <strong>タイルの種類</strong> が増えて揃いにくくなります（全10ステージ）。</span></div>
     <div class="howto-row"><span class="howto-icon">💀</span><span>スロットが <strong>満杯（7枠）</strong> になるとゲームオーバーです。</span></div>
 
     <h3>タイルの重なり</h3>
@@ -931,7 +1026,7 @@
 <h1>PLANET PUZZLE</h1>
 
 <div id="info-bar">
-  残りタイル &nbsp;<span id="tile-count">0</span>
+  <span id="stage-label">STAGE 1</span> &nbsp;·&nbsp; 残りタイル <span id="tile-count">0</span>
 </div>
 
 <div id="game-wrapper">
@@ -954,7 +1049,7 @@
   <div id="overlay-box">
     <div id="overlay-title"></div>
     <div id="overlay-msg"></div>
-    <button id="overlay-btn">タイトルに戻る</button>
+    <button id="overlay-btn">ステージ選択へ</button>
   </div>
 </div>
 
@@ -963,7 +1058,7 @@
     <span id="clear-planet">🪐</span>
     <div id="clear-title">MISSION<br>COMPLETE</div>
     <div id="clear-msg">すべての惑星を解放した！</div>
-    <button id="clear-btn">タイトルに戻る</button>
+    <button id="clear-btn">ステージ選択へ</button>
   </div>
 </div>
 
@@ -1339,8 +1434,18 @@ const SFX = (() => {
 
 // 惑星・天体テーマ（太陽系8惑星＋太陽＋月）
 const TILE_TYPES = ['☀️','🌕','🌍','🪐','🔴','🔵','🟠','🟡','⚫','🟣','⭐','☄️','🌙','🛸','💫'];
-const TILE_COUNT_EACH = 27;  // 各タイル種類の枚数（3の倍数）→ 合計405枚
+const TILE_COUNT_EACH = 27;  // 各タイル種類の枚数（3の倍数）→ マッチ可能性を保証
 const GAME_W = 560, GAME_H = 700;
+
+// ===== ステージ設定 =====
+// 難化軸は「タイルの種類数」。序盤は少ない種類で揃えやすく、
+// ステージが上がるほど種類が増えて揃いにくくなる。
+// STAGE 1 = 6種(162枚) … STAGE 10 = 15種(405枚=フル)。
+const STAGE_COUNT = 10;
+const BASE_NUM_TYPES = 6;  // STAGE 1 の種類数
+function stageNumTypes(stage) {
+  return Math.min(BASE_NUM_TYPES + (stage - 1), TILE_TYPES.length);
+}
 const TILE_SIZE = 70;
 const BASE_SLOTS = 7;
 const LAYERS = 7;             // 積み重ねレイヤー数（Mahjong式7層）
@@ -1360,9 +1465,36 @@ let history = [];       // アンドゥ用スタック [{tiles, slots}]
 let gameOver = false;
 let isAnimating = false;
 let totalTiles = 0;     // ゲーム開始時の総タイル数
+let currentStage = 1;   // プレイ中のステージ番号
+let stageTypes = [];    // 現ステージで使うタイル種類（TILE_TYPESのインデックス配列）
+
+// ===== 進捗（解放済みステージ）の永続化 =====
+const PROGRESS_KEY = 'planet-puzzle-progress';
+let unlockedStage = 1;  // 解放済みの最高ステージ（1始まり）
+function loadProgress() {
+  try {
+    const v = parseInt(localStorage.getItem(PROGRESS_KEY), 10);
+    // STAGE_COUNT+1 は「全ステージクリア済み」を表す番兵値
+    if (Number.isFinite(v) && v >= 1) unlockedStage = Math.min(v, STAGE_COUNT + 1);
+  } catch (e) {}
+}
+function saveProgress() {
+  try { localStorage.setItem(PROGRESS_KEY, String(unlockedStage)); } catch (e) {}
+}
+loadProgress();
+
+// 現ステージで使う種類をランダムに選ぶ（毎プレイで顔ぶれが変わりリプレイ性UP）
+function pickStageTypes(n) {
+  const all = TILE_TYPES.map((_, i) => i);
+  shuffle(all);
+  return all.slice(0, n).sort((a, b) => a - b);
+}
 
 // ===== 初期化 =====
-function init() {
+function init(stage = 1) {
+  currentStage = stage;
+  stageTypes = pickStageTypes(stageNumTypes(stage));
+
   tiles = [];
   slots = [];
   slotTypeOrder = [];
@@ -1381,17 +1513,23 @@ function init() {
   updateBlockedState();
   renderSlots();
   updateTileCount();
+  updateStageLabel();
   SFX.bgmGame(); // ゲーム中BGM開始
+}
+
+function updateStageLabel() {
+  const el = document.getElementById('stage-label');
+  if (el) el.textContent = `STAGE ${currentStage}`;
 }
 
 // ===== タイル生成 =====
 function generateTiles() {
   const gameArea = document.getElementById('game-area');
 
-  // タイルの種類プール（各TILE_COUNT_EACH枚）
+  // タイルの種類プール（ステージで選ばれた種類×TILE_COUNT_EACH枚）
   let pool = [];
-  TILE_TYPES.forEach((t, i) => {
-    for (let k = 0; k < TILE_COUNT_EACH; k++) pool.push({ type: i });
+  stageTypes.forEach((typeIndex) => {
+    for (let k = 0; k < TILE_COUNT_EACH; k++) pool.push({ type: typeIndex });
   });
   shuffle(pool);
 
@@ -1729,6 +1867,11 @@ function updateTileCount() {
 // ===== ゲーム状態チェック =====
 function checkGameState() {
   if (tiles.length === 0) {
+    // 次のステージを解放（最終ステージのクリアは番兵値 STAGE_COUNT+1 で「全クリ」を記録）
+    if (currentStage + 1 > unlockedStage) {
+      unlockedStage = currentStage + 1;
+      saveProgress();
+    }
     SFX.bgmStop(0.4);
     SFX.clear();
     showClearOverlay();
@@ -1849,6 +1992,12 @@ function showOverlay(title, msg) {
 }
 
 function showClearOverlay() {
+  const allClear = currentStage >= STAGE_COUNT;
+  document.getElementById('clear-title').innerHTML =
+    allClear ? 'ALL STAGES<br>COMPLETE' : `STAGE ${currentStage}<br>CLEAR`;
+  document.getElementById('clear-msg').textContent =
+    allClear ? '全ステージ制覇！おめでとう！🎉'
+             : `STAGE ${currentStage + 1}（${stageNumTypes(currentStage + 1)}種）が解放されました！`;
   document.getElementById('clear-overlay').classList.add('show');
   launchConfetti();
 }
@@ -1889,36 +2038,22 @@ function launchConfetti() {
   }
 }
 
+// ゲーム終了後はステージ選択へ戻る（解放状況が反映され、続けてプレイしやすい）
+function returnToStageSelect() {
+  document.getElementById('game-screen').classList.remove('visible');
+  showStageSelect();
+  SFX.bgmStart(); // 選択画面BGM（タイトルと共通）を再開
+  if (window.__applyUpdateIfSafe) window.__applyUpdateIfSafe();
+}
+
 document.getElementById('clear-btn').addEventListener('click', () => {
   document.getElementById('clear-overlay').classList.remove('show');
-  const gameScreen = document.getElementById('game-screen');
-  gameScreen.classList.remove('visible');
-  const titleScreen = document.getElementById('title-screen');
-  titleScreen.style.display = '';
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    titleScreen.classList.remove('hidden');
-    SFX.bgmStart(); // BGM再開
-    if (window.__applyUpdateIfSafe) window.__applyUpdateIfSafe();
-  }));
+  returnToStageSelect();
 });
 
 document.getElementById('overlay-btn').addEventListener('click', () => {
   document.getElementById('overlay').classList.remove('show');
-
-  // ゲーム画面を非表示
-  const gameScreen = document.getElementById('game-screen');
-  gameScreen.classList.remove('visible');
-
-  // タイトル画面を再表示
-  const titleScreen = document.getElementById('title-screen');
-  titleScreen.style.display = '';
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      titleScreen.classList.remove('hidden');
-      SFX.bgmStart(); // BGM再開
-      if (window.__applyUpdateIfSafe) window.__applyUpdateIfSafe();
-    });
-  });
+  returnToStageSelect();
 });
 
 // ===== ユーティリティ =====
@@ -2188,17 +2323,56 @@ document.getElementById('title-screen').addEventListener('pointerdown', () => {
   });
 })();
 
+// ===== ステージ選択 =====
+function renderStageSelect() {
+  const grid = document.getElementById('stage-grid');
+  grid.innerHTML = '';
+  for (let s = 1; s <= STAGE_COUNT; s++) {
+    const cleared = s < unlockedStage;
+    const locked  = s > unlockedStage;
+    const btn = document.createElement('button');
+    btn.className = 'stage-cell' + (locked ? ' locked' : '') + (cleared ? ' cleared' : '');
+    const info = locked ? '🔒' : (cleared ? '✓ クリア' : `${stageNumTypes(s)}種`);
+    btn.innerHTML = `<span class="stage-no">${s}</span><span class="stage-info">${info}</span>`;
+    if (!locked) btn.addEventListener('click', () => startStage(s));
+    grid.appendChild(btn);
+  }
+}
+
+function showStageSelect() {
+  renderStageSelect();
+  document.getElementById('stage-select').classList.add('visible');
+}
+
+function hideStageSelect() {
+  document.getElementById('stage-select').classList.remove('visible');
+}
+
+function startStage(stage) {
+  hideStageSelect();
+  SFX.bgmStop(0.4); // 選択BGMをフェードアウト
+  const gameScreen = document.getElementById('game-screen');
+  gameScreen.classList.add('visible');
+  resizeGame();
+  init(stage);
+}
+
+// タイトル「GAME START」→ ステージ選択を開く（タイトルBGMは継続）
 document.getElementById('start-btn').addEventListener('click', () => {
   const titleScreen = document.getElementById('title-screen');
-  const gameScreen  = document.getElementById('game-screen');
-
-  SFX.bgmStop(0.8); // BGMフェードアウト
-
   titleScreen.classList.add('hidden');
   setTimeout(() => { titleScreen.style.display = 'none'; }, 650);
+  showStageSelect();
+});
 
-  gameScreen.classList.add('visible');
-  init();
+// ステージ選択「← タイトルへ」
+document.getElementById('stage-back').addEventListener('click', () => {
+  hideStageSelect();
+  const titleScreen = document.getElementById('title-screen');
+  titleScreen.style.display = '';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    titleScreen.classList.remove('hidden');
+  }));
 });
 
 // 流れ星を定期生成

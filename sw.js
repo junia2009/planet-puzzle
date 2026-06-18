@@ -9,7 +9,7 @@
 //   5. self.clients.claim() で既存タブを新SWの制御下へ
 //   6. クライアント側の 'controllerchange' でページをリロードして反映完了
 // =====================================================================
-const APP_VERSION = '2.15.3';
+const APP_VERSION = '2.16.0';
 const CACHE = `planet-puzzle-v${APP_VERSION}`;
 const ASSETS = [
   './',
