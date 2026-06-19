@@ -1010,6 +1010,7 @@
     <div class="howto-row"><span class="howto-icon">✨</span><span>スロットに同じ種類が <strong>3枚</strong> 揃うと自動で消去されます。</span></div>
     <div class="howto-row"><span class="howto-icon">🏆</span><span>盤面のタイルをすべて消せば <strong>STAGE CLEAR！</strong> 次のステージが解放されます。</span></div>
     <div class="howto-row"><span class="howto-icon">🪐</span><span>ステージが上がるほど <strong>タイルの種類</strong> が増えて揃いにくくなります（全10ステージ）。</span></div>
+    <div class="howto-row"><span class="howto-icon">🌠</span><span>ステージごとに <strong>盤面の形（シルエット）</strong> も変化します（彗星・三日月・リング…）。</span></div>
     <div class="howto-row"><span class="howto-icon">💀</span><span>スロットが <strong>満杯（7枠）</strong> になるとゲームオーバーです。</span></div>
 
     <h3>タイルの重なり</h3>
@@ -1446,6 +1447,39 @@ const BASE_NUM_TYPES = 6;  // STAGE 1 の種類数
 function stageNumTypes(stage) {
   return Math.min(BASE_NUM_TYPES + (stage - 1), TILE_TYPES.length);
 }
+
+// ===== ステージ別シルエット =====
+// 種類数に加え、ステージごとに「盤面の埋め方（形）」を変える。
+// 各関数は座標(x,y)を受け取り、値が小さいセルほど先に埋まる（＝形の中心）。
+// タイル総数はステージで増えるので、同じ形のまま外側へ広がって密度が上がる（優先順位マスク方式）。
+// (x,y) はタイル中心を盤面中心からのグリッド単位へ正規化した座標（x:約±3 / y:約±4、yは下向き）。
+// ※低枚数(序盤)ほど形がはっきり出る。終盤は盤面の7〜8割が埋まるため「縁の空き方」で形を見せる。
+const STAGE_SHAPES = [
+  // 1 ☄️ 彗星：右上から左下へ伸びる尾
+  (x, y) => { const u = x - y; return Math.abs(x + y + 0.3) / 1.6 + Math.max(0, u - 3.2) * 1.3 + Math.max(0, -u - 3.2) * 1.3; },
+  // 2 🌙 三日月：大きな円から右の円をくり抜く
+  (x, y) => Math.max(Math.hypot(x * 1.05, y) - 3.3, 2.7 - Math.hypot(x - 1.5, y + 0.2)),
+  // 3 🪐 リング（軌道）：中心が空いた輪
+  (x, y) => Math.abs(Math.hypot(x, y) - 2.35),
+  // 4 ⭐ 五芒星
+  (x, y) => { const a = Math.atan2(-y, x); const k = Math.cos(5 * a - 5 * Math.PI / 2); return Math.hypot(x, y) - (1.0 + 1.7 * Math.pow(k * 0.5 + 0.5, 1.4)); },
+  // 5 💫 きらめき：縦横に伸びる4方向スパークル
+  (x, y) => { const ax = Math.abs(x), ay = Math.abs(y); return Math.min(ax + ay * 0.55, ay + ax * 0.55) - 0.5; },
+  // 6 🛸 円盤（UFO）：上下を空けた横長
+  (x, y) => Math.sqrt((x / 3.4) ** 2 + (y / 2.2) ** 2) - 1,
+  // 7 🚀 ロケット：細い機体＋先端＋下部フィン
+  (x, y) => { let w; if (y < -1.0) w = Math.max(0, 1.2 * (1 - (-1.0 - y) / 2.4)); else if (y > 2.2) w = 1.2 + (y - 2.2) * 1.4; else w = 1.2; return (Math.abs(x) - w) + Math.max(0, y - 3.7) + Math.max(0, -3.6 - y); },
+  // 8 🌀 ワームホール：中央がくびれた砂時計
+  (x, y) => Math.abs(x) - (0.3 + Math.abs(y) * 0.6) + Math.max(0, Math.abs(y) - 3.6) * 3,
+  // 9 🌍 惑星：大きな円
+  (x, y) => Math.hypot(x, y * 0.95),
+  // 10 💥 超新星：全面（角まで広がる）
+  (x, y) => Math.max(Math.abs(x) / 3.05, Math.abs(y) / 4.05),
+];
+const STAGE_SHAPE_NAMES = ['彗星', '三日月', 'リング', '五芒星', 'きらめき', '円盤', 'ロケット', 'ワームホール', '惑星', '超新星'];
+const STAGE_SHAPE_ICONS = ['☄️', '🌙', '🪐', '⭐', '💫', '🛸', '🚀', '🌀', '🌍', '💥'];
+function stageShapeIndex(stage) { return (stage - 1) % STAGE_SHAPES.length; }
+
 const TILE_SIZE = 70;
 const BASE_SLOTS = 7;
 const LAYERS = 7;             // 積み重ねレイヤー数（Mahjong式7層）
@@ -1519,7 +1553,7 @@ function init(stage = 1) {
 
 function updateStageLabel() {
   const el = document.getElementById('stage-label');
-  if (el) el.textContent = `STAGE ${currentStage}`;
+  if (el) el.textContent = `STAGE ${currentStage} ${STAGE_SHAPE_ICONS[stageShapeIndex(currentStage)]}`;
 }
 
 // ===== タイル生成 =====
@@ -1581,14 +1615,21 @@ function generateTiles() {
     const startX = baseStartX + ox;
     const startY = baseStartY + oy;
 
-    // この層の全セル（GRID_COLS×GRID_ROWS = 42セル）をシャッフル
+    // この層のセルを「ステージのシルエット」に従って優先順位付けする。
+    // タイル中心を盤面中心からのグリッド単位に正規化して形状関数へ渡し、
+    // 値が小さい（＝形の中心に近い）セルから順に埋める。
+    // 微小なランダムjitterで毎プレイ縁が変化し、リプレイ性を保つ（形自体は崩れない）。
+    const shapeFn = STAGE_SHAPES[stageShapeIndex(currentStage)];
     const cells = [];
     for (let r = 0; r < GRID_ROWS; r++) {
       for (let c = 0; c < GRID_COLS; c++) {
-        cells.push({ c, r });
+        const nx = (startX + c * TILE_SIZE + TILE_SIZE / 2 - GAME_W / 2) / TILE_SIZE;
+        const ny = (startY + r * TILE_SIZE + TILE_SIZE / 2 - GAME_H / 2) / TILE_SIZE;
+        const score = shapeFn(nx, ny) + (Math.random() - 0.5) * 0.7;
+        cells.push({ c, r, score });
       }
     }
-    shuffle(cells);
+    cells.sort((a, b) => a.score - b.score);
 
     // この層のタイル数（最終層は余り全部）
     const count = (layer < LAYERS - 1) ? tilesPerLayer : pool.length;
@@ -1997,7 +2038,7 @@ function showClearOverlay() {
     allClear ? 'ALL STAGES<br>COMPLETE' : `STAGE ${currentStage}<br>CLEAR`;
   document.getElementById('clear-msg').textContent =
     allClear ? '全ステージ制覇！おめでとう！🎉'
-             : `STAGE ${currentStage + 1}（${stageNumTypes(currentStage + 1)}種）が解放されました！`;
+             : `STAGE ${currentStage + 1} ${STAGE_SHAPE_ICONS[stageShapeIndex(currentStage + 1)]}${STAGE_SHAPE_NAMES[stageShapeIndex(currentStage + 1)]}（${stageNumTypes(currentStage + 1)}種）が解放されました！`;
   document.getElementById('clear-overlay').classList.add('show');
   launchConfetti();
 }
@@ -2332,7 +2373,8 @@ function renderStageSelect() {
     const locked  = s > unlockedStage;
     const btn = document.createElement('button');
     btn.className = 'stage-cell' + (locked ? ' locked' : '') + (cleared ? ' cleared' : '');
-    const info = locked ? '🔒' : (cleared ? '✓ クリア' : `${stageNumTypes(s)}種`);
+    const icon = STAGE_SHAPE_ICONS[stageShapeIndex(s)];
+    const info = locked ? '🔒' : (cleared ? `${icon} ✓` : `${icon} ${stageNumTypes(s)}種`);
     btn.innerHTML = `<span class="stage-no">${s}</span><span class="stage-info">${info}</span>`;
     if (!locked) btn.addEventListener('click', () => startStage(s));
     grid.appendChild(btn);
