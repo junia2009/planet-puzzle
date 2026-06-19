@@ -1480,6 +1480,33 @@ const STAGE_SHAPE_NAMES = ['彗星', '三日月', 'リング', '五芒星', 'き
 const STAGE_SHAPE_ICONS = ['☄️', '🌙', '🪐', '⭐', '💫', '🛸', '🚀', '🌀', '🌍', '💥'];
 function stageShapeIndex(stage) { return (stage - 1) % STAGE_SHAPES.length; }
 
+// ===== ステージ別パイル（深積み）配置 =====
+// 各スタックは [x, y, 枚数, dx, dy]（dx,dyは1枚ごとのずれpx）。盤面560×700内に収める。
+// どの配置も合計24枚（グリッドへ回る枚数が一定＝クリア可能性に影響なし）。
+const PILE_DOWN = 12; // 1枚ごとの基本ずらし量
+const PILE_LAYOUTS = [
+  // 1 ☄️ 彗星：左から右下へ流れる斜めの2本
+  [[15, 40, 12, 10, PILE_DOWN], [15, 300, 12, 10, PILE_DOWN]],
+  // 2 🌙 三日月：右端に2本（月の膨らみ側）
+  [[475, 150, 12, 0, PILE_DOWN], [475, 430, 12, 0, PILE_DOWN]],
+  // 3 🪐 リング：四隅に4本
+  [[15, 15, 6, 0, PILE_DOWN], [475, 15, 6, 0, PILE_DOWN], [15, 475, 6, 0, PILE_DOWN], [475, 475, 6, 0, PILE_DOWN]],
+  // 4 ⭐ 五芒星：左右の上に2本
+  [[15, 40, 12, 0, PILE_DOWN], [475, 40, 12, 0, PILE_DOWN]],
+  // 5 💫 きらめき：左端に2本（クラシック）
+  [[15, 150, 12, 0, PILE_DOWN], [15, 430, 12, 0, PILE_DOWN]],
+  // 6 🛸 円盤：上下に横流れの2本
+  [[120, 15, 12, PILE_DOWN, 0], [120, 585, 12, PILE_DOWN, 0]],
+  // 7 🚀 ロケット：左端に長い1本の塔（24枚）
+  [[15, 40, 24, 0, PILE_DOWN]],
+  // 8 🌀 ワームホール：左右中央に2本
+  [[15, 250, 12, 0, PILE_DOWN], [475, 250, 12, 0, PILE_DOWN]],
+  // 9 🌍 惑星：左端に短い3本
+  [[15, 40, 8, 0, PILE_DOWN], [15, 260, 8, 0, PILE_DOWN], [15, 480, 8, 0, PILE_DOWN]],
+  // 10 💥 超新星：上辺に散る4本
+  [[15, 15, 6, 0, PILE_DOWN], [170, 15, 6, 0, PILE_DOWN], [325, 15, 6, 0, PILE_DOWN], [480, 15, 6, 0, PILE_DOWN]],
+];
+
 const TILE_SIZE = 70;
 const BASE_SLOTS = 7;
 const LAYERS = 7;             // 積み重ねレイヤー数（Mahjong式7層）
@@ -1570,23 +1597,24 @@ function generateTiles() {
   let id = 0;
 
   // ===== パイル（深積み）生成 =====
-  const PILE_EACH = 12;
-  const PILE_STEP = 12;
-  // パイルはゲームエリア左端固定
-  const pileBaseX = 15;
-  [150, 430].forEach((baseY) => {
-    for (let d = 0; d < PILE_EACH; d++) {
+  // ステージごとに位置・形が変わる（PILE_LAYOUTS）。各スタックは [x, y, 枚数, dx, dy]。
+  // zはグリッド最上層(最大1900)より常に手前になるよう3000を基点にする
+  // （長い塔でもグリッドに埋もれて詰むのを防ぐ）。
+  const pileLayout = PILE_LAYOUTS[stageShapeIndex(currentStage)];
+  pileLayout.forEach(([sx, sy, n, dx, dy]) => {
+    for (let d = 0; d < n && pool.length > 0; d++) {
       const p = pool.shift();
-      const tileY = baseY + d * PILE_STEP;
-      const zIndex = 2000 - d * 5;
+      const tx = sx + d * dx;
+      const ty = sy + d * dy;
+      const zIndex = 3000 - d * 5;
       const elem = document.createElement('div');
       elem.className = `tile tile-${p.type}`;
-      elem.style.left   = pileBaseX + 'px';
-      elem.style.top    = tileY + 'px';
+      elem.style.left   = tx + 'px';
+      elem.style.top    = ty + 'px';
       elem.style.zIndex = zIndex;
       elem.textContent  = TILE_TYPES[p.type];
       elem.dataset.id   = id;
-      const tile = { id, type: p.type, x: pileBaseX, y: tileY, layer: 20, zIndex, elem, blocked: false };
+      const tile = { id, type: p.type, x: tx, y: ty, layer: 20, zIndex, elem, blocked: false };
       tiles.push(tile);
       elem.addEventListener('click', () => onTileClick(tile.id));
       gameArea.appendChild(elem);
